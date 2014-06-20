@@ -1,0 +1,83 @@
+<% include header.html %>
+
+<script>
+$(function() {
+    $("input[type=submit]").map(function(x) {
+        $(this).button()
+        .click(function(event) {
+            $.ajax({
+                  url: $(this).attr("url"),
+                  context: document.body
+                }).done(function() {
+                    location.reload();
+                });
+        });
+    });
+
+    $("#content").accordion({ collapsible: true });
+    $("#dlghash").dialog({ autoOpen: false, width: 500 }).css("word-wrap","break-word");
+    $(".hash").button().click(function() {
+            var dataAttr = $(this).data();
+            $('#spanDataName').text(dataAttr.hash);
+            $("#dlghash").dialog('open');
+            return false;
+        }
+    );
+});
+
+// setTimeout(function() {
+//     window.location.reload(1);
+// }, 5000);
+
+</script>
+
+<div id="content">
+    <h3>Listing of available middlers</h3>
+    <div>
+        <p>The following shows a listing of all middlers currently active.
+	       Note that if you delete the current one, you will need to choose
+	       which becomes the next active widget.</p>
+        <p>Courtesy SNARF v0.2, by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com).</p>
+    </div>
+</div>
+
+<div id="dlghash">
+    <p id="spanDataName"></p>
+</div>
+
+<table class="ui-widget" style="width: 100%">
+    <tr>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">ID</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Current?</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Connection</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Username</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Host</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Version</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Freshness</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Hash</th>
+	    <th class="ui-state-default ui-th-column ui-th-ltr">Actions</th>
+	</tr>
+	
+
+	<% middlers.forEach(function(middler) { %>
+	    <% if(middler.active) { %>
+            <tr class="ui-widget-content">
+	            <td><%= middler.id %></td>
+	            <td style='font-size: 20pt; text-align:center'><%= (middler.current) ? "&bull;" : "" %></td>
+	            <td><%= middler.addr %>:<%= middler.port %> &rarr; <%= middler.dest %></td>
+	            <td><%= middler.user %></td>
+	            <td><%= middler.host %></td>
+	            <td><%= middler.winver %></td>
+	            <td><%= middler.age %> s</td>
+	            <td><input type='button' class="hash" value="<%= middler.htype %>" data-hash="<%= middler.hash %>"></button></td>
+	            <td><input type='submit' url="/kill/<%= middler.id %>" value='kill' <%= middler.expired ? "" : "disabled" %> />
+	                <input type='submit' url="/choose/<%= middler.id %>" value='choose'  <%= middler.expired ? "" : "disabled" %> />
+	                <input type='submit' url="/expire/<%= middler.id %>" value='expire'  <%= middler.expired ? "disabled" : "" %>/>
+                </td>
+	        </tr>
+	    <% } %>
+	<% }) %>
+	
+</table>
+
+<% include footer.html %>
