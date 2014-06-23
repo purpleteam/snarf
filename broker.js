@@ -101,8 +101,8 @@ module.exports.Broker = function() {
 	}
 
         // Client connection has terminated, must maintain server connectivity.
-        out.yellow("Passing m.getSMBUserID() = " + m.getSMBUserID());
-        this.activateKeepAlive(m.getServer(), m.getSMBUserID());
+        out.yellow("Passing m.getSMBUserID() = " + m.attributes.userid);
+        this.activateKeepAlive(m.getServer(), m.attributes.userid);
     }
 
     this.deactivateMiddler = function(m) {
@@ -139,12 +139,12 @@ module.exports.Broker = function() {
 	    	       addr:   this.middlers[x].getClientAddr(),
 	    	       port:   this.middlers[x].getClientPort(),
 	    	       dest:   this.middlers[x].getServerAddr(),
-                       domain: this.middlers[x].getDomain(),
-	    	       user:   this.middlers[x].getUsername(),
-	    	       host:   this.middlers[x].getHostname(),
-                       winver: this.middlers[x].getWinVer(),
-                       hash:   this.middlers[x].getHash(),
-                       htype:  this.middlers[x].getHashType(),
+                       domain: this.middlers[x].attributes.domain, // getDomain(),
+	    	       user:   this.middlers[x].attributes.username, // getUsername(),
+	    	       host:   this.middlers[x].attributes.hostname, // getHostname(),
+                       winver: this.middlers[x].attributes.winver, //getWinVer(),
+                       hash:   this.middlers[x].getHash(), // getHash(),
+                       htype:  this.middlers[x].attributes.hashtype, //getHashType(),
 	    	       age:    now.diff(this.middlers[x].getFreshness(), "seconds"),
 	    	       active: this.middlers[x].getActive(),
 	    	       current: x == currentID,
@@ -185,8 +185,8 @@ module.exports.Broker = function() {
 	    	    	sock.on('end', function(x) {
 	    	    	    myself.current.setClient(undefined);
 	    	    	    myself.hackercount = 0;
-                            out.yellow("Sending getSMBUserID() = " + currentMiddler.getSMBUserID());
-	    	    	    myself.activateKeepAlive(currentMiddler.getServer(), currentMiddler.getSMBUserID());
+                            out.yellow("Sending useid = " + currentMiddler.attributes.userid);
+	    	    	    myself.activateKeepAlive(currentMiddler.getServer(), currentMiddler.attributes.userid);
 	    	    	});
 
 	    	    	sock.on('error', function(x) {
@@ -211,7 +211,7 @@ module.exports.Broker = function() {
 	    	    	    	myself.current.setClient(sock);
 	    	    	    	myself.current.getReqPackets().push(packet);
 	    	    	    	myself.current.getServer().write(x);
-                                mysqlf.current.setMature(true);
+                                myself.current.setMature(true);
 	    	    	    	
 	    	    	    	if(myself.specialConditions(packet)) myself.handleSpecials(sock);
 	    	    	    }

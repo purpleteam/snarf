@@ -35,17 +35,19 @@ function Middler(id) {
     var clientPort;
     var serverIP;
     var collectPackets = false;
-    var domain = "unknown";
-    var username = "unknown";
-    var hostname = "unknown";
-    var winver = "unknown";
-    var smb_userid;
-    var smb_challenge = "unknown";
-    var smb_hash = "unknown";
+      var domain = "unknown";
+      var username = "unknown";
+      var hostname = "unknown";
+      var winver = "unknown";
+      var smb_userid;
+      var smb_challenge = "unknown";
+      var smb_hash = "unknown";
     var smb_htype = "unknown";
     var freshness = moment();
     var active = true;
     var mature; // this variable tells when the client has released the client socket
+
+    this.attributes = new Object;
 
     this.expired = false;
 
@@ -96,73 +98,18 @@ function Middler(id) {
 	return server;
     }
 
-    this.getDomain = function() {
-	return domain;
-    }
-
-    this.setDomain = function(name) {
-	domain = name;
-    }
-
-    this.getHostname = function() {
-	return hostname;
-    }
-    
-    this.setHostname = function(name) {
-	hostname = name;
-    }
-
-    this.getUsername = function() {
-	return username;
-    }
-
-    this.setUsername = function(name) {
-	username = name;
-    }
-
-    this.getWinVer = function() {
-	return winver;
-    }
-
-    this.setWinVer = function(version) {
-	winver = version;
-    }
-
-    this.getSMBUserID = function() {
-        return smb_userid;
-    }
-
-    this.setSMBUserID = function(id) {
-	smb_userid = id;
-    }
-
-    this.setSMBChallenge = function(challenge) {
-	smb_challenge = challenge;
-    }
-
     this.getHash = function() {
         var hash = "unknown"
-        switch(smb_htype) {
+        var attributes = this.attributes;
+        switch(attributes.hashtype) {
         case "NTLMv1":
-            hash = username + "::" + domain + ":" + smb_hash + ":" + smb_challenge;
+            hash = attributes.username + "::" + attributes.domain + ":" + attributes.hash + ":" + attributes.challenge;
             break;
         case "NTLMv2":
-            hash = username + "::" + domain + ":" + smb_challenge + ":" + smb_hash;
+            hash = attributes.username + "::" + attributes.domain + ":" + attributes.challenge + ":" + attributes.hash;
             break;
         }
         return hash;
-    }
-
-    this.setHash = function(hash) {
-	smb_hash = hash;
-    }
-
-    this.getHashType = function() {
-	return smb_htype;
-    }
-
-    this.setHashType = function(hashtype) {
-	smb_htype = hashtype;
     }
 
     this.getClientAddr = function() {

