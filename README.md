@@ -44,7 +44,7 @@ Here's the basic process:
   3. Open a web browser to http://localhost:4001/
   4. Wait for a connection to come through
   5. Either wait for the connection to "complete" or "expire" it manually with the provided buttons
-  6. Connect your own tools (e.g., for SMB use smbclient, net, Metasploit, etc.) to 127.0.0.1
+  6. Connect your own tools (e.g., for SMB use smbclient, net, Metasploit, etc.) to 127.0.0.1.  (Note, the username and password you use don't matter -- Snarf will authenticate it no matter what.  The resulting session will use the snarfed connection to the server and, with it, the victim's credentials)
 
 Known Issues
 ============
