@@ -171,13 +171,13 @@ module.exports.Broker = function() {
 
                     currentMiddler = myself.middlers[myself.getCurrentID()];
 
-	    	    // This may not always be true -- e.g., if something
-	    	    // gets out of sync and the current middler is
-	    	    // undefined.  We don't want the whole program to come
-	    	    // crashing down, so we just gracefully ignore the
-	    	    // inbound connection in such a case.  The hacker tool
-	    	    // will see something like
-	    	    // "NT_STATUS_CONNECTION_RESET"
+	    	    // This may not always be true -- e.g., if
+	    	    // something gets out of sync and the current
+	    	    // middler is undefined.  We don't want the whole
+	    	    // program to come crashing down, so we just
+	    	    // gracefully ignore the inbound connection in
+	    	    // such a case.  The hacker tool will see
+	    	    // something like "NT_STATUS_CONNECTION_RESET"
 
 	    	    if(currentMiddler) {
 	    	    	myself.deactivateKeepAlive(currentMiddler.getServer());
@@ -207,10 +207,11 @@ module.exports.Broker = function() {
 	    	    	    	// Once we have completed our authentication
 	    	    	    	// handshake, the remainder of the session is to
 	    	    	    	// pass packets back and forth.
-	    	    	    	
+                                
 	    	    	    	myself.current.setClient(sock);
 	    	    	    	myself.current.getReqPackets().push(packet);
 	    	    	    	myself.current.getServer().write(x);
+                                mysqlf.current.setMature(true);
 	    	    	    	
 	    	    	    	if(myself.specialConditions(packet)) myself.handleSpecials(sock);
 	    	    	    }

