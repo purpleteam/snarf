@@ -213,9 +213,9 @@ module.exports.SMBBroker = function() {
     // SMB Echo Request on a timed interval. Activation/deactivation is
     // mostly handled in the "listenForHackers" function.
 
-    this.activateKeepAlive = function(server, userid) {
+    this.activateKeepAlive = function(middler) {
         out.yellow("Keepalive for middler");
-        server.timerID = setInterval(function() {
+        middler.attributes.timerID = setInterval(function() {
 
 	    // SMB_ECHO_REQUEST packets don't keep the server alive --
 	    // there needs to be an open resource.  We can do this by
@@ -230,14 +230,16 @@ module.exports.SMBBroker = function() {
                                 "5c005c003100320037002e0030002e00" +
                                 "30002e0031005c004900500043002400" +
                                 "00003f3f3f3f3f00", "hex");
-            out.yellow("User id is " + userid);
-            packet.writeUInt16LE(userid, 32);
-            server.write(packet);
-	}, 12 * 60000); // every 12 minutes is a safe frequency
+            out.yellow("User id is " + middler.attributes.userid);
+            packet.writeUInt16LE(middler.attributes.userid, 32);
+            middler.getServer().write(packet);
+	}, 10000); // every 12 minutes is a safe frequency
+        //}, 12 * 60000); // every 12 minutes is a safe frequency
     }
 
-    this.deactivateKeepAlive = function(server) {
-        clearInterval(server.timerID);
+    this.deactivateKeepAlive = function(middler) {
+        if(middler.attributes.timerID) {
+            clearInterval(middler.attributes.timerID);
+        }
     }
-
 }

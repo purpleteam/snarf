@@ -46,7 +46,7 @@ function Middler(id) {
     var freshness = moment();
     var active = true;
     var mature; // this variable tells when the client has released the client socket
-
+    
     this.attributes = new Object;
 
     this.expired = false;

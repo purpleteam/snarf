@@ -61,7 +61,7 @@ module.exports.Broker = function() {
     this.hackercount = 0;
     this.socket = undefined;
     this.localactive = false;
-    var timerID;
+    // var timerID;
 
     this.getMiddlers = function() {
 	return this.middlers;
@@ -86,11 +86,11 @@ module.exports.Broker = function() {
 	}
     }
     
-    this.activateKeepAlive = function(sock, uid) {
+    this.activateKeepAlive = function(middler) {
 	return true;
     }
 
-    this.deactivateKeepAlive = function(server) {
+    this.deactivateKeepAlive = function(middler) {
 	return true;
     }
 
@@ -101,8 +101,8 @@ module.exports.Broker = function() {
 	}
 
         // Client connection has terminated, must maintain server connectivity.
-        out.yellow("Passing m.getSMBUserID() = " + m.attributes.userid);
-        this.activateKeepAlive(m.getServer(), m.attributes.userid);
+        // out.yellow("Passing m.getSMBUserID() = " + m.attributes.userid);
+        this.activateKeepAlive(m); // .getServer(), m.attributes.userid);
     }
 
     this.deactivateMiddler = function(m) {
@@ -111,7 +111,7 @@ module.exports.Broker = function() {
 	// has the effect of eventually killing all of our sessions!
 
 	//this.deactivateKeepAlive();
-        this.deactivateKeepAlive(this.middlers[m].getServer());
+        this.deactivateKeepAlive(m); // this.middlers[m].getServer());
 	out.red("Removing Middler #"+m);
 	this.middlers[m].setActive(false);
     }
@@ -180,13 +180,13 @@ module.exports.Broker = function() {
 	    	    // something like "NT_STATUS_CONNECTION_RESET"
 
 	    	    if(currentMiddler) {
-	    	    	myself.deactivateKeepAlive(currentMiddler.getServer());
+	    	    	myself.deactivateKeepAlive(currentMiddler); // currentMiddler.getServer());
 
 	    	    	sock.on('end', function(x) {
 	    	    	    myself.current.setClient(undefined);
 	    	    	    myself.hackercount = 0;
                             out.yellow("Sending useid = " + currentMiddler.attributes.userid);
-	    	    	    myself.activateKeepAlive(currentMiddler.getServer(), currentMiddler.attributes.userid);
+	    	    	    myself.activateKeepAlive(currentMiddler); // currentMiddler.getServer(), currentMiddler.attributes.userid);
 	    	    	});
 
 	    	    	sock.on('error', function(x) {
