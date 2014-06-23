@@ -34,9 +34,9 @@ Here's the basic process:
 
   1. Do a man-in-the-middle -- Linux must be routing the traffic of your victim
   2. Run Snarf as root, binding to your LAN IP
-
     $ sudo node snarf.js <bindIP>
-  
+  3. Run the iptables rule to move traffic to SNARF's chain:
+    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF
   3. Open a web browser to http://localhost:4001/
   4. Wait for a connection to come through
   5. Either wait for the connection to "complete" or "expire" it manually with the provided buttons
