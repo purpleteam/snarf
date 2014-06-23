@@ -1,7 +1,7 @@
 snarf
 =====
 
-Snarf is a software suite to help increase the value of man-in-the-middle attacks.  Many historical applications of techniques like SMB-Relay rely on assumptions, and relegate these attacks to exploitation, rather than the discovery / enumeration phase of the penetration test.  While these tools don't introduce new vulnerabilities, they introduce a new capability to capitalize on exploiting familiar vulnerabilities.
+Snarf is a software suite to help increase the value of man-in-the-middle attacks.  Many historical applications of techniques like SMB-Relay rely on assumptions, and relegate these attacks to exploitation, rather than the discovery / enumeration phase of the penetration test.  While Snarf doesn't introduce new vulnerabilities, they introduce a new capability to capitalize on exploiting familiar vulnerabilities.
 
 The Fundamental Idea
 ====================
