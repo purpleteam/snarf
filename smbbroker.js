@@ -215,25 +215,30 @@ module.exports.SMBBroker = function() {
 
     this.activateKeepAlive = function(middler) {
         out.yellow("Keepalive for middler");
-        middler.attributes.timerID = setInterval(function() {
+        if(middler.attributes.userid) {
+            middler.attributes.timerID = setInterval(function() {
 
-	    // SMB_ECHO_REQUEST packets don't keep the server alive --
-	    // there needs to be an open resource.  We can do this by
-	    // periodically connecting to the IPC$ tree and then
-	    // disconnecting.  This carrys out the TREE_CONNECT.  The
-	    // smbbroker takes care of closing the tree when the
-	    // response comes in (it needs to know the TreeID).
+	        // SMB_ECHO_REQUEST packets don't keep the server alive --
+	        // there needs to be an open resource.  We can do this by
+	        // periodically connecting to the IPC$ tree and then
+	        // disconnecting.  This carrys out the TREE_CONNECT.  The
+	        // smbbroker takes care of closing the tree when the
+	        // response comes in (it needs to know the TreeID).
 
-            packet = new Buffer("00000054ff534d4275000000001843c8" +
-                                "000000000000000000000000ffff6511" +
-                                "0010040004ff0000000c000100290000" +
-                                "5c005c003100320037002e0030002e00" +
-                                "30002e0031005c004900500043002400" +
-                                "00003f3f3f3f3f00", "hex");
-            out.yellow("User id is " + middler.attributes.userid);
-            packet.writeUInt16LE(middler.attributes.userid, 32);
-            middler.getServer().write(packet);
-        }, 12 * 60000); // every 12 minutes is a safe frequency
+                packet = new Buffer("00000054ff534d4275000000001843c8" +
+                                    "000000000000000000000000ffff6511" +
+                                    "0010040004ff0000000c000100290000" +
+                                    "5c005c003100320037002e0030002e00" +
+                                    "30002e0031005c004900500043002400" +
+                                    "00003f3f3f3f3f00", "hex");
+                out.yellow("User id is " + middler.attributes.userid);
+                packet.writeUInt16LE(middler.attributes.userid, 32);
+                middler.getServer().write(packet);
+            }, 12 * 60000); // every 12 minutes is a safe frequency
+        } else {
+            db.red("ERROR starting keepalive -- no userid was detected?");
+            middler.attributes.timreID = null;
+        }
     }
 
     this.deactivateKeepAlive = function(middler) {
