@@ -93,31 +93,39 @@ client = net.createServer(function(sock) {
     out.red("Client " + sock.remoteAddress + ":" + sock.remotePort + " connected");
     
     router.checkout(sock.remoteAddress, sock.remotePort, function(tip) {
-	    if(defip && tip == bindip) {
+        if(tip == bindip || tip == "0.0.0.0") {
+	    if(defip) {
 	        if(defip != sock.remoteAddress) {
 	    	    out.red("Got inbound connection, routing to default");
 	    	    tip = defip;
 	        } else {
-
+                    
 	    	    // Consider the MS09-001 check
-
+                    
 	    	    out.red("Received connection from " + defip + " to " + defip);
 	    	    out.red("Not middling (it wouldn't work anyway)");
 	    	    midl.NullMiddler(sock);
 	    	    return;
 	        }
-	    }
-	    var server = net.connect({port: 445, host: tip}, function() {
+	    } else {
+                out.red("ERROR, can't relay connection destined for bindip");
+                out.red("You may want to specify a default destination with");
+                out.red("the '-d <ip>' flag.");
+                midl.NullMiddler(sock);
+                return;
+            }
+        }
+	var server = net.connect({port: 445, host: tip}, function() {
             out.red("Server connected, will relay to " + tip);
-	        var middler = new midl.Middler(count);
-	        count += 1;
-	        middler.setClientInfo(sock.remoteAddress,sock.remotePort,tip);
-	        middler.setBroker(broker);
-	        broker.addMiddler(middler);
-	        middler.setServer(server);
-	        middler.setOriginalClient(sock);
-	        sock.resume();
-	    });
+	    var middler = new midl.Middler(count);
+	    count += 1;
+	    middler.setClientInfo(sock.remoteAddress,sock.remotePort,tip);
+	    middler.setBroker(broker);
+	    broker.addMiddler(middler);
+	    middler.setServer(server);
+	    middler.setOriginalClient(sock);
+	    sock.resume();
+	});
     });
 });
 

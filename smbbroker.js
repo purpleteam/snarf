@@ -233,12 +233,12 @@ module.exports.SMBBroker = function() {
             out.yellow("User id is " + middler.attributes.userid);
             packet.writeUInt16LE(middler.attributes.userid, 32);
             middler.getServer().write(packet);
-	}, 10000); // every 12 minutes is a safe frequency
-        //}, 12 * 60000); // every 12 minutes is a safe frequency
+        }, 12 * 60000); // every 12 minutes is a safe frequency
     }
 
     this.deactivateKeepAlive = function(middler) {
-        if(middler.attributes.timerID) {
+        if(middler.attributes && 
+           middler.attributes.timerID) {
             clearInterval(middler.attributes.timerID);
         }
     }

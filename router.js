@@ -63,25 +63,31 @@ module.exports.Router = function(bindip) {
 	    });
     });
 
-    function checkout2(srcip, sport, cback) {
-	    var done = false;
-	    for(var i=0; i<connections.length; i++) {
-	        if(srcip == connections[i][0] &&
-	           sport == connections[i][2]) {
-	    	    cback(connections[i][1]);
-	    	    out.blue("DB hit -- found connection from iptables");
-	    	    done = true;
-	        }
+    function checkout2(srcip, sport, cback, count) {
+	var done = false;
+	for(var i=0; i<connections.length; i++) {
+            
+	    if(srcip == connections[i][0] &&
+	       sport == connections[i][2]) {
+	    	cback(connections[i][1]);
+	    	out.blue("DB hit -- found connection from iptables");
+	    	done = true;
 	    }
-	    if(done) { return }
-	    else {
-	        out.blue("DB Timeout looking for connection from " + srcip + ":" + sport);
-	        setTimeout(checkout2, 100, srcip, sport, cback);
-	    }
+	}
+	if(done) { return }
+	else {
+	    out.blue("DB Timeout looking for connection from " + srcip + ":" + sport);
+            if(count > 10) {
+                out.blue("DB no response in kernel log, responding with 0.0.0.0");
+                cback("0.0.0.0");
+            } else {
+                setTimeout(checkout2, 100, srcip, sport, cback, count + 1);
+            }
+	}
     }
 
     function checkout(srcip, sport, cback) {
-	    setTimeout(checkout2, 100, srcip, sport, cback);
+	setTimeout(checkout2, 100, srcip, sport, cback, 0);
     }
 
     this.checkout = checkout;
