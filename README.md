@@ -5,6 +5,8 @@ Snarf is a software suite to help increase the value of man-in-the-middle attack
 
 Check out [our NOLAcon '14 presentation](http://www.josho.org/software/snarf-nolacon-presentation.pdf) for a decent intro to the concept.
 
+Check out [a 'live' demo of Snarf in action](https://www.youtube.com/watch?v=oBSrcrdRLyA&feature=youtu.be) to get a better sense for how it works.
+
 The Fundamental Idea
 ====================
 
