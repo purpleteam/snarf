@@ -35,13 +35,13 @@ function Middler(id) {
     var clientPort;
     var serverIP;
     var collectPackets = false;
-      var domain = "unknown";
-      var username = "unknown";
-      var hostname = "unknown";
-      var winver = "unknown";
-      var smb_userid;
-      var smb_challenge = "unknown";
-      var smb_hash = "unknown";
+    var domain = "unknown";
+    var username = "unknown";
+    var hostname = "unknown";
+    var winver = "unknown";
+    var smb_userid;
+    var smb_challenge = "unknown";
+    var smb_hash = "unknown";
     var smb_htype = "unknown";
     var freshness = moment();
     var active = true;
@@ -59,43 +59,43 @@ function Middler(id) {
     // get too firmly coupled to the rest of the Snarf system.
 
     this.setActive = function(state) {
-	active = state;
+        active = state;
     }
 
     this.getActive = function() {
-	return active;
+        return active;
     }
 
     this.freshen = function() {
-	freshness = moment();
+        freshness = moment();
     }
 
     this.getFreshness = function() {
-	return freshness;
+        return freshness;
     }
 
     this.shutdown = function() {
-	out.red("Can't shutdown session that hasn't been setup yet");
+        out.red("Can't shutdown session that hasn't been setup yet");
     }
 
     this.getID = function() {
-	return id;
+        return id;
     }
 
     this.getRespPackets = function() {
-	return respPackets;
+        return respPackets;
     }
     
     this.getReqPackets = function() {
-	return reqPackets;
+        return reqPackets;
     }
 
     this.getClient = function() {
-	return client;
+        return client;
     }
 
     this.getServer = function() {
-	return server;
+        return server;
     }
 
     this.getHash = function() {
@@ -113,7 +113,7 @@ function Middler(id) {
     }
 
     this.getClientAddr = function() {
-	return clientIP;
+        return clientIP;
     }
 
     this.getMature = function() {
@@ -125,37 +125,37 @@ function Middler(id) {
     }
 
     this.getServerAddr = function() {
-	return serverIP;
+        return serverIP;
     }
 
     this.getClientPort = function() {
-	return clientPort;
+        return clientPort;
     }
 
     this.setID = function(i) {
-	id = i;
+        id = i;
     }
 
     this.setClientInfo = function(addr, port, dest) {
-	clientIP = addr;
-	clientPort = port;
-	serverIP = dest;
+        clientIP = addr;
+        clientPort = port;
+        serverIP = dest;
     }
 
     this.setBroker = function(b) {
-	broker = b;
+        broker = b;
     }
 
     this.setClient = function(s) {
-	client = s;
+        client = s;
     }
 
     this.terminate = function() {
-	if(server) server.end();
+        if(server) server.end();
     }
 
     this.expire = function() {
-	this.shutdown();
+        this.shutdown();
     }
 
     // The server component is actually a client socket connected to
@@ -169,29 +169,29 @@ function Middler(id) {
         server = val;
 
         server.on('data', function(x) {
-	    var packet = broker.parsePacket(x);
+            var packet = broker.parsePacket(x);
             // var packet = new smb.SMBPacket(x);
-	    if(myself.collectPackets) {
-		respPackets.push(packet);
-	    }
-	    if(packet.commandCode != 0x2b) {
-		out.darkgreen("[" + myself.getID() + "] Server: " + packet.describe());
-	    }
+            if(myself.collectPackets) {
+                respPackets.push(packet);
+            }
+            if(packet.commandCode != 0x2b) {
+                out.darkgreen("[" + myself.getID() + "] Server: " + packet.describe());
+            }
 
-	    broker.reviewServerPacket(packet, client, myself);
+            broker.reviewServerPacket(packet, client, myself);
         });
 
         server.on('end', function(data) {
-	    out.red("Encountered 'end' event from server");
-	    broker.deactivateMiddler(id);
+            out.red("Encountered 'end' event from server");
+            broker.deactivateMiddler(id);
         });
 
-	server.on('error', function(data) {
-	    server.pause();
+        server.on('error', function(data) {
+            server.pause();
 
-	    out.red("Encountered error from server");
-	    broker.deactivateMiddler(id);
-	});
+            out.red("Encountered error from server");
+            broker.deactivateMiddler(id);
+        });
     }
 
     // We need to trap some authenticated session.  This is the
@@ -200,40 +200,40 @@ function Middler(id) {
     // dies, we find a hacker tool to substitute.
 
     this.setOriginalClient = function(val) {
-	var myself = this;
+        var myself = this;
         client = val;
 
-	this.shutdown = function() {
-	    myself.expired = true;
-	    out.red("Activating middler");
-	    broker.activateMiddler(myself);
-	    client.end();
-	    if(client) {
-	    	out.red("Destroying client socket!");
-	    	client.destroy();
-	    }
+        this.shutdown = function() {
+            myself.expired = true;
+            out.red("Activating middler");
+            broker.activateMiddler(myself);
+            client.end();
+            if(client) {
+                out.red("Destroying client socket!");
+                client.destroy();
+            }
             client = undefined;
-	    server.resume();
-	}
+            server.resume();
+        }
 
         client.on('data', function(x) {
-	    var packet = broker.parsePacket(x);
+            var packet = broker.parsePacket(x);
             // var packet = new smb.SMBPacket(x);
-	    if(myself.collectPackets) {
-		reqPackets.push(packet);
-	    }
+            if(myself.collectPackets) {
+                reqPackets.push(packet);
+            }
             out.green("[" + myself.getID() + "] Client: " + packet.describe());
-	    broker.reviewClientPacket(packet, server, myself);
+            broker.reviewClientPacket(packet, server, myself);
         });
 
-	client.on("error", function() {
-	    server.pause();
-	    myself.shutdown();
-	});
+        client.on("error", function() {
+            server.pause();
+            myself.shutdown();
+        });
 
         client.on('end', function() {
-	    server.pause();
-	    myself.shutdown();
+            server.pause();
+            myself.shutdown();
         });
     }
 
@@ -241,15 +241,15 @@ function Middler(id) {
 
 module.exports.NullMiddler = function(x) {
     x.on('data', function(x) {
-	out.red("Shouldn't get data");
+        out.red("Shouldn't get data");
     });
 
     x.on('error', function() {
-	out.red("Shouldn't get errors");
+        out.red("Shouldn't get errors");
     });
 
     x.on('end', function() {
-	out.red("Closing down socket\n");
+        out.red("Closing down socket\n");
     });
 }
 

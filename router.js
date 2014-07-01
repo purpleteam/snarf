@@ -32,15 +32,15 @@ module.exports.Router = function(bindip) {
     var connections = [];
 
     klog.stdout.on("data", function(x) {
-	    var lines = x.toString().split(/\n/);
-	    for(var i = 0; i < lines.length; i++) {
-	        if(m = lines[i].toString().match(/SRC=([0-9.]+) DST=([0-9.]+) .*?SPT=([0-9]+)/)) {
-	    	    var srcip = m[1];
-	    	    var dstip = m[2];
-	    	    var sport = m[3];
-	    	    connections.push([srcip, dstip, sport]);
-	        }
-	    }
+        var lines = x.toString().split(/\n/);
+        for(var i = 0; i < lines.length; i++) {
+            if(m = lines[i].toString().match(/SRC=([0-9.]+) DST=([0-9.]+) .*?SPT=([0-9]+)/)) {
+                var srcip = m[1];
+                var dstip = m[2];
+                var sport = m[3];
+                connections.push([srcip, dstip, sport]);
+            }
+        }
     });
 
     // I don't want to be too invasive, but I'll assume that no one
@@ -51,43 +51,43 @@ module.exports.Router = function(bindip) {
 
     out.blue("Router: iptables -t nat -X SNARF");
     exec("iptables -t nat -F SNARF", function(a,b,c) {
-	    out.blue("Router: iptables -t nat -N SNARF");
-	    exec("iptables -t nat -N SNARF", function(a,b,c) {
-	        out.blue("Router: iptables -t nat -A SNARF -p tcp -j LOG");
-	        exec("iptables -t nat -A SNARF -p tcp -j LOG", function(a,b,c) {
-	    	    out.blue("Router: iptables -t nat -A SNARF -p tcp --dport 445 -j DNAT --to " + bindip + ":445");
-	    	    exec("iptables -t nat -A SNARF -p tcp --dport 445 -j DNAT --to " + bindip + ":445", function(a,b,c) {
-	    	        out.blue("Router: To intercept, run 'iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF'");
-	    	    });
-	        });
-	    });
+        out.blue("Router: iptables -t nat -N SNARF");
+        exec("iptables -t nat -N SNARF", function(a,b,c) {
+            out.blue("Router: iptables -t nat -A SNARF -p tcp -j LOG");
+            exec("iptables -t nat -A SNARF -p tcp -j LOG", function(a,b,c) {
+                out.blue("Router: iptables -t nat -A SNARF -p tcp --dport 445 -j DNAT --to " + bindip + ":445");
+                exec("iptables -t nat -A SNARF -p tcp --dport 445 -j DNAT --to " + bindip + ":445", function(a,b,c) {
+                    out.blue("Router: To intercept, run 'iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF'");
+                });
+            });
+        });
     });
 
     function checkout2(srcip, sport, cback, count) {
-	var done = false;
-	for(var i=0; i<connections.length; i++) {
+        var done = false;
+        for(var i=0; i<connections.length; i++) {
             
-	    if(srcip == connections[i][0] &&
-	       sport == connections[i][2]) {
-	    	cback(connections[i][1]);
-	    	out.blue("DB hit -- found connection from iptables");
-	    	done = true;
-	    }
-	}
-	if(done) { return }
-	else {
-	    out.blue("DB Timeout looking for connection from " + srcip + ":" + sport);
+            if(srcip == connections[i][0] &&
+               sport == connections[i][2]) {
+                cback(connections[i][1]);
+                out.blue("DB hit -- found connection from iptables");
+                done = true;
+            }
+        }
+        if(done) { return }
+        else {
+            out.blue("DB Timeout looking for connection from " + srcip + ":" + sport);
             if(count > 10) {
                 out.blue("DB no response in kernel log, responding with 0.0.0.0");
                 cback("0.0.0.0");
             } else {
                 setTimeout(checkout2, 100, srcip, sport, cback, count + 1);
             }
-	}
+        }
     }
 
     function checkout(srcip, sport, cback) {
-	setTimeout(checkout2, 100, srcip, sport, cback, 0);
+        setTimeout(checkout2, 100, srcip, sport, cback, 0);
     }
 
     this.checkout = checkout;

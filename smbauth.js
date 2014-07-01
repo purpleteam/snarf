@@ -61,8 +61,8 @@ SMBPacket = function(packet) {
     this.smb_flags2    = this.smb_body.readUInt16LE(10);
     this.smb_pidh      = this.smb_body.readUInt16LE(12);
     this.smb_sig       = 
-	this.smb_body.readUInt32LE(14) << 32 +
-	this.smb_body.readUInt32LE(18);
+        this.smb_body.readUInt32LE(14) << 32 +
+        this.smb_body.readUInt32LE(18);
     this.smb_res       = this.smb_body.readUInt16LE(22);
     this.smb_tree      = this.smb_body.readUInt8(24);
     this.smb_pid       = this.smb_body.readUInt16LE(25);
@@ -84,39 +84,39 @@ module.exports.SMBAuth = function(sock) {
     this.uid = 2400;
 
     this.respond = function(packet) {
-	try {
-	    switch(this.state) {
-	    case 0:
-	    	var response = this.negotiate(new SMBPacket(packet));
-	    	this.state = 1;
-	    	break;
-	    case 1:
-	    	var response = this.challenge(new SMBPacket(packet));
-	    	this.state = 2;
-	    	break;
-	    case 2:
-	    	var response = this.success(new SMBPacket(packet));
-	    	this.state = 3;
-	    	this.authenticated = true;
-	    	break;
-	    case 3:
-	    	out.red("SMB Auth is not supposed to receive more packets!");
-	    	return;
-	    default:
-	    	out.red("Unknown FSM state");
-	    }
-	    var nbt = new Buffer(4);
-	    nbt.writeUInt32BE((response.length) & 0x0fff, 0);
-	    sock.write(Buffer.concat([nbt,response]));
-	} catch(e) {
-	    out.red("Error in SMB authentication");
-	    out.red(e);
-	    if(sock) sock.end();
-	}
+        try {
+            switch(this.state) {
+            case 0:
+                var response = this.negotiate(new SMBPacket(packet));
+                this.state = 1;
+                break;
+            case 1:
+                var response = this.challenge(new SMBPacket(packet));
+                this.state = 2;
+                break;
+            case 2:
+                var response = this.success(new SMBPacket(packet));
+                this.state = 3;
+                this.authenticated = true;
+                break;
+            case 3:
+                out.red("SMB Auth is not supposed to receive more packets!");
+                return;
+            default:
+                out.red("Unknown FSM state");
+            }
+            var nbt = new Buffer(4);
+            nbt.writeUInt32BE((response.length) & 0x0fff, 0);
+            sock.write(Buffer.concat([nbt,response]));
+        } catch(e) {
+            out.red("Error in SMB authentication");
+            out.red(e);
+            if(sock) sock.end();
+        }
     }
 
     this.set_uid = function(val) {
-	this.uid = val;
+        this.uid = val;
     }
 
     //
@@ -126,33 +126,33 @@ module.exports.SMBAuth = function(sock) {
     //
 
     this.negotiate = function(packet) {
-	this.dialects = [];
-	var buffer = packet.smb_rest.slice(4, packet.rest_len);
-	var dialect = 1;
-	var index = 0;
-	for(var cursor = 0; cursor < buffer.length; cursor++) {
-	    if(buffer[cursor] == 0) {
-	    	var str = buffer.toString("utf8", dialect, cursor);
-	    	if(str == "NT LM 0.12") index = this.dialects.length;
-	    	this.dialects.push(str);
-	    	dialect = cursor + 2;
-	    }
-	}
-	var header = packet.smb_header;
-	header[9] = [packet.smb_flags | 0x80];
-	var body = new Buffer("11090003320001000411000000000100" +
-	    		      "00000000fce30180ea1f9e4cb15acf01" +
-	    		      "2c010088003178a5db280d8744a8d124" +
-	    		      "0e69bb441e607606062b0601050502a0" +
-	    		      "6c306aa03c303a060a2b060104018237" +
-	    		      "02021e06092a864882f7120102020609" +
-	    		      "2a864886f712010202060a2a864886f7" +
-	    		      "1201020203060a2b0601040182370202" +
-	    		      "0aa32a3028a0261b246e6f745f646566" +
-	    		      "696e65645f696e5f5246433431373840" +
-	    		      "706c656173655f69676e6f7265", "hex");
-	body.writeUInt16LE(index, 1);
-	return Buffer.concat([header,body]);
+        this.dialects = [];
+        var buffer = packet.smb_rest.slice(4, packet.rest_len);
+        var dialect = 1;
+        var index = 0;
+        for(var cursor = 0; cursor < buffer.length; cursor++) {
+            if(buffer[cursor] == 0) {
+                var str = buffer.toString("utf8", dialect, cursor);
+                if(str == "NT LM 0.12") index = this.dialects.length;
+                this.dialects.push(str);
+                dialect = cursor + 2;
+            }
+        }
+        var header = packet.smb_header;
+        header[9] = [packet.smb_flags | 0x80];
+        var body = new Buffer("11090003320001000411000000000100" +
+                              "00000000fce30180ea1f9e4cb15acf01" +
+                              "2c010088003178a5db280d8744a8d124" +
+                              "0e69bb441e607606062b0601050502a0" +
+                              "6c306aa03c303a060a2b060104018237" +
+                              "02021e06092a864882f7120102020609" +
+                              "2a864886f712010202060a2a864886f7" +
+                              "1201020203060a2b0601040182370202" +
+                              "0aa32a3028a0261b246e6f745f646566" +
+                              "696e65645f696e5f5246433431373840" +
+                              "706c656173655f69676e6f7265", "hex");
+        body.writeUInt16LE(index, 1);
+        return Buffer.concat([header,body]);
     }
 
     // 
@@ -162,37 +162,37 @@ module.exports.SMBAuth = function(sock) {
     //
     
     this.challenge = function(packet) {
-	var header = packet.smb_header;
-	header[9] = packet.smb_flags | 0x80;
-	header.writeUInt32LE(0xc0000016, 5);
-	header.writeUInt16LE(this.uid, 28);
-	var body = new Buffer("04ff00fa0100004301cf01a182013f30" +
-	    		      "82013ba0030a0101a10c060a2b060104" +
-	    		      "01823702020aa2820124048201204e54" +
-	    		      "4c4d53535000020000001a001a003800" +
-	    		      "000015828962f153d2ccced2d8130000" +
-	    		      "000000000000ce00ce00520000000601" +
-	    		      "b11d0000000f53004e00410052004600" +
-	    		      "49004e0047005f004d00490054004d00" +
-	    		      "02001a0053004e004100520046004900" +
-	    		      "4e0047005f004d00490054004d000100" +
-	    		      "14004a004f005300480053002d005400" +
-	    		      "34003200300004002200740072006100" +
-	    		      "63006500730065006300750072006900" +
-	    		      "740079002e0063006f006d0003003800" +
-	    		      "4a004f005300480053002d0054003400" +
-	    		      "320030002e0074007200610063006500" +
-	    		      "73006500630075007200690074007900" +
-	    		      "2e0063006f006d000500220074007200" +
-	    		      "61006300650073006500630075007200" +
-	    		      "6900740079002e0063006f006d000700" +
-	    		      "08001c959e4cb15acf01000000005300" +
-	    		      "6e0061007200660000004a006f007300" +
-	    		      "6800200053002e002000260020005600" +
-	    		      "6900630074006f00720020004d002e00" +
-	    		      "0000", "hex");
-	body.writeUInt16LE(body.length-11, 9);
-	return Buffer.concat([header, body]);
+        var header = packet.smb_header;
+        header[9] = packet.smb_flags | 0x80;
+        header.writeUInt32LE(0xc0000016, 5);
+        header.writeUInt16LE(this.uid, 28);
+        var body = new Buffer("04ff00fa0100004301cf01a182013f30" +
+                              "82013ba0030a0101a10c060a2b060104" +
+                              "01823702020aa2820124048201204e54" +
+                              "4c4d53535000020000001a001a003800" +
+                              "000015828962f153d2ccced2d8130000" +
+                              "000000000000ce00ce00520000000601" +
+                              "b11d0000000f53004e00410052004600" +
+                              "49004e0047005f004d00490054004d00" +
+                              "02001a0053004e004100520046004900" +
+                              "4e0047005f004d00490054004d000100" +
+                              "14004a004f005300480053002d005400" +
+                              "34003200300004002200740072006100" +
+                              "63006500730065006300750072006900" +
+                              "740079002e0063006f006d0003003800" +
+                              "4a004f005300480053002d0054003400" +
+                              "320030002e0074007200610063006500" +
+                              "73006500630075007200690074007900" +
+                              "2e0063006f006d000500220074007200" +
+                              "61006300650073006500630075007200" +
+                              "6900740079002e0063006f006d000700" +
+                              "08001c959e4cb15acf01000000005300" +
+                              "6e0061007200660000004a006f007300" +
+                              "6800200053002e002000260020005600" +
+                              "6900630074006f00720020004d002e00" +
+                              "0000", "hex");
+        body.writeUInt16LE(body.length-11, 9);
+        return Buffer.concat([header, body]);
     }
 
     //
@@ -204,19 +204,19 @@ module.exports.SMBAuth = function(sock) {
     //
 
     this.success = function(packet) {
-	var header = packet.smb_header;
-	header[9] = packet.smb_flags | 0x80;
-	header.writeUInt32LE(0, 5);
-	header.writeUInt16LE(this.uid, 28);
+        var header = packet.smb_header;
+        header[9] = packet.smb_flags | 0x80;
+        header.writeUInt32LE(0, 5);
+        header.writeUInt16LE(this.uid, 28);
 
-	var body = new Buffer("04ff00c000000009009500a1073005a0" +
-	    		      "030a010053006e006100720066000000" +
-	    		      "4a006f0073006800200053002e002000" +
-	    		      "2600200056006900630074006f007200" +
-	    		      "20004d002e000000", "hex");
-	
-	body.writeUInt16LE(body.length-11, 9);
-	return Buffer.concat([header, body]);
+        var body = new Buffer("04ff00c000000009009500a1073005a0" +
+                              "030a010053006e006100720066000000" +
+                              "4a006f0073006800200053002e002000" +
+                              "2600200056006900630074006f007200" +
+                              "20004d002e000000", "hex");
+        
+        body.writeUInt16LE(body.length-11, 9);
+        return Buffer.concat([header, body]);
     }
 }
 
@@ -231,24 +231,24 @@ module.exports.SMBAuth = function(sock) {
 
 module.exports.test = function() {
     client = net.createServer(function(sock) {
-	out.blue("Socket opened");
-	authorizer = new module.exports.SMBAuth(sock);
+        out.blue("Socket opened");
+        authorizer = new module.exports.SMBAuth(sock);
 
-	sock.on("data", function(packet) {
-	    if(!authorizer.authenticated) {
-	    	authorizer.respond(packet);
-	    } else {
-	        // handle it normally
-	    	out.red("received a packet to send to the middler!");
-	    }
-	});
+        sock.on("data", function(packet) {
+            if(!authorizer.authenticated) {
+                authorizer.respond(packet);
+            } else {
+                // handle it normally
+                out.red("received a packet to send to the middler!");
+            }
+        });
 
-	sock.on("end", function() {
-	    out.blue("Socket closed.");
-	});
+        sock.on("end", function() {
+            out.blue("Socket closed.");
+        });
     });
 
     client.listen(445, "0.0.0.0", function() {
-	out.blue("Server bound on port 445");
+        out.blue("Server bound on port 445");
     });
 }

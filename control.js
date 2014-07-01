@@ -32,41 +32,41 @@ module.exports.ControlPanel = function(broker, port, globals) {
     app.use(express.static(__dirname + "/static"));
     
     app.get('/', function(req, res){
-	var middlers = broker.listMiddlers();
-	var current  = broker.getCurrentID();
+        var middlers = broker.listMiddlers();
+        var current  = broker.getCurrentID();
         var defip    = globals.defip;
-	res.render('index', { middlers: broker.listMiddlers(),
-			      current:  broker.getCurrentID(),
+        res.render('index', { middlers: broker.listMiddlers(),
+                              current:  broker.getCurrentID(),
                               defip:    defip
                             });
     });
 
     app.get('/kill/:num', function(req, res) {
- 	var n = parseInt(req.params.num);
- 	out.blue("Control Server: Killing session #"+n);
- 	if(n != NaN && broker.getMiddlers().length > n) {
- 	    broker.getMiddlers()[n].terminate();
- 	    broker.resetIDs();
- 	}
-	res.redirect('/');
+        var n = parseInt(req.params.num);
+        out.blue("Control Server: Killing session #"+n);
+        if(n != NaN && broker.getMiddlers().length > n) {
+            broker.getMiddlers()[n].terminate();
+            broker.resetIDs();
+        }
+        res.redirect('/');
     });
 
     app.get('/choose/:num', function(req, res) {
- 	var n = parseInt(req.params.num);
- 	out.blue("Control Server: Received choose request for #"+n);
- 	if(n != NaN && broker.getMiddlers().length > n) {
- 	    broker.setCurrentMiddler(n);
- 	}
-	res.redirect('/');
+        var n = parseInt(req.params.num);
+        out.blue("Control Server: Received choose request for #"+n);
+        if(n != NaN && broker.getMiddlers().length > n) {
+            broker.setCurrentMiddler(n);
+        }
+        res.redirect('/');
     });
 
     app.get('/expire/:num', function(req, res) {
-	var n = parseInt(req.params.num);
-	out.blue("Control Server: Received expire request for #" + n);
-	if(n != NaN && broker.getMiddlers().length > n) {
-	    broker.expire(n);
-	}
-	res.redirect('/');
+        var n = parseInt(req.params.num);
+        out.blue("Control Server: Received expire request for #" + n);
+        if(n != NaN && broker.getMiddlers().length > n) {
+            broker.expire(n);
+        }
+        res.redirect('/');
     });
 
     app.patch('/set/defip/:ip', function(req, res) {

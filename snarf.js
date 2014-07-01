@@ -64,9 +64,9 @@ getopt = new Getopt([
 ]);
 
 getopt.setHelp(
-  "\nUsage: node snarf.js [OPTION] BindIP\n" +
-  "\n" +
-  "[[OPTIONS]]\n"
+    "\nUsage: node snarf.js [OPTION] BindIP\n" +
+        "\n" +
+        "[[OPTIONS]]\n"
 );
 
 opt = getopt.parse(process.argv.slice(2));
@@ -95,20 +95,20 @@ client = net.createServer(function(sock) {
     
     router.checkout(sock.remoteAddress, sock.remotePort, function(tip) {
         if(tip == bindip || tip == "0.0.0.0") {
-	    if(globals.defip && globals.defip != "0.0.0.0") {
-	        if(globals.defip != sock.remoteAddress) {
-	    	    out.red("Got inbound connection, routing to default");
-	    	    tip = globals.defip;
-	        } else {
+            if(globals.defip && globals.defip != "0.0.0.0") {
+                if(globals.defip != sock.remoteAddress) {
+                    out.red("Got inbound connection, routing to default");
+                    tip = globals.defip;
+                } else {
                     
-	    	    // Consider the MS09-001 check
+                    // Consider the MS09-001 check
                     
-	    	    out.red("Received connection from " + globals.defip + " to " + globals.defip);
-	    	    out.red("Not middling (it wouldn't work anyway)");
-	    	    midl.NullMiddler(sock);
-	    	    return;
-	        }
-	    } else {
+                    out.red("Received connection from " + globals.defip + " to " + globals.defip);
+                    out.red("Not middling (it wouldn't work anyway)");
+                    midl.NullMiddler(sock);
+                    return;
+                }
+            } else {
                 out.red("ERROR, can't relay connection destined for bindip");
                 out.red("You may want to specify a default destination with");
                 out.red("the '-d <ip>' flag.");
@@ -116,17 +116,21 @@ client = net.createServer(function(sock) {
                 return;
             }
         }
-	var server = net.connect({port: 445, host: tip}, function() {
+        var server = net.connect({port: 445, host: tip}, function() {
             out.red("Server connected, will relay to " + tip);
-	    var middler = new midl.Middler(count);
-	    count += 1;
-	    middler.setClientInfo(sock.remoteAddress,sock.remotePort,tip);
-	    middler.setBroker(broker);
-	    broker.addMiddler(middler);
-	    middler.setServer(server);
-	    middler.setOriginalClient(sock);
-	    sock.resume();
-	});
+            var middler = new midl.Middler(count);
+            count += 1;
+            middler.setClientInfo(sock.remoteAddress,sock.remotePort,tip);
+            middler.setBroker(broker);
+            broker.addMiddler(middler);
+            middler.setServer(server);
+            middler.setOriginalClient(sock);
+            sock.resume();
+        });
+        server.on("error", function() {
+            out.red("Server connection encountered an error");
+            out.red("This could be because of a failure to route to the destination");
+        });
     });
 });
 
