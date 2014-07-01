@@ -45,6 +45,11 @@ $(function() {
     <p id="hash"></p>
 </div>
 
+<form id='ipform'>
+  <b>Default IP:</b> <input id='ipval' name='ip' value='<%= defip %>' />
+  <input type='button' value='change' onClick="$.ajax({url: '/set/defip/' + $('#ipval').val(), type: 'PATCH'})">
+</form>
+
 <table class="ui-widget" style="width: 100%">
     <tr>
 	    <th class="ui-state-default ui-th-column ui-th-ltr">ID</th>

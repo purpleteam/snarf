@@ -81,12 +81,13 @@ var router = new rout.Router(bindip);
 var broker = new SMBBroker();
 var client;
 var count = 0;
+var globals = new Object;
 
-var defip = opt.options["defaultip"] ? opt.options["defaultip"] : false;
+globals.defip = opt.options["defaultip"] ? opt.options["defaultip"] : "0.0.0.0";
 
-out.red("Default IP is " + defip);
+out.red("Default IP is " + globals.defip);
 
-ctrl.ControlPanel(broker, 4001);
+ctrl.ControlPanel(broker, 4001, globals);
 
 client = net.createServer(function(sock) {
     sock.pause();
@@ -94,15 +95,15 @@ client = net.createServer(function(sock) {
     
     router.checkout(sock.remoteAddress, sock.remotePort, function(tip) {
         if(tip == bindip || tip == "0.0.0.0") {
-	    if(defip) {
-	        if(defip != sock.remoteAddress) {
+	    if(globals.defip && globals.defip != "0.0.0.0") {
+	        if(globals.defip != sock.remoteAddress) {
 	    	    out.red("Got inbound connection, routing to default");
-	    	    tip = defip;
+	    	    tip = globals.defip;
 	        } else {
                     
 	    	    // Consider the MS09-001 check
                     
-	    	    out.red("Received connection from " + defip + " to " + defip);
+	    	    out.red("Received connection from " + globals.defip + " to " + globals.defip);
 	    	    out.red("Not middling (it wouldn't work anyway)");
 	    	    midl.NullMiddler(sock);
 	    	    return;

@@ -23,7 +23,7 @@ var md = require("marked");
 var fs = require("fs");
 var out = require("./out.js");
 
-module.exports.ControlPanel = function(broker, port) {
+module.exports.ControlPanel = function(broker, port, globals) {
 
     var app = express();
     app.engine(".html", require("ejs").__express);
@@ -34,8 +34,11 @@ module.exports.ControlPanel = function(broker, port) {
     app.get('/', function(req, res){
 	var middlers = broker.listMiddlers();
 	var current  = broker.getCurrentID();
+        var defip    = globals.defip;
 	res.render('index', { middlers: broker.listMiddlers(),
-			      current:  broker.getCurrentID() });
+			      current:  broker.getCurrentID(),
+                              defip:    defip
+                            });
     });
 
     app.get('/kill/:num', function(req, res) {
@@ -64,6 +67,13 @@ module.exports.ControlPanel = function(broker, port) {
 	    broker.expire(n);
 	}
 	res.redirect('/');
+    });
+
+    app.patch('/set/defip/:ip', function(req, res) {
+        var ip = req.params.ip;
+        out.blue("Setting new default IP to " + ip);
+        globals.defip = ip;
+        res.redirect(301, "/");
     });
     
     app.listen(port);
