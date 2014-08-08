@@ -26,25 +26,18 @@ var moment = require("moment");
 function Middler(id) {
     var client;
     var server;
-    var reqPackets  = [];
-    var respPackets = [];
-    var hackercount = 0;
-    var broker = undefined;
-    var myself = this;
     var clientIP;
     var clientPort;
     var serverIP;
+    var reqPackets     = [];
+    var respPackets    = [];
+    var hackercount    = 0;
+    var broker         = undefined;
+    var myself         = this;
     var collectPackets = false;
-    var domain = "unknown";
-    var username = "unknown";
-    var hostname = "unknown";
-    var winver = "unknown";
-    var smb_userid;
-    var smb_challenge = "unknown";
-    var smb_hash = "unknown";
-    var smb_htype = "unknown";
-    var freshness = moment();
-    var active = true;
+    var hostname       = "unknown";
+    var freshness      = moment();
+    var active         = true;
     var mature; // this variable tells when the client has released the client socket
     
     this.attributes = new Object;
@@ -98,20 +91,6 @@ function Middler(id) {
         return server;
     }
 
-    this.getHash = function() {
-        var hash = "unknown"
-        var attributes = this.attributes;
-        switch(attributes.hashtype) {
-        case "NTLMv1":
-            hash = attributes.username + "::" + attributes.domain + ":" + attributes.hash + ":" + attributes.challenge;
-            break;
-        case "NTLMv2":
-            hash = attributes.username + "::" + attributes.domain + ":" + attributes.challenge + ":" + attributes.hash;
-            break;
-        }
-        return hash;
-    }
-
     this.getClientAddr = function() {
         return clientIP;
     }
@@ -159,10 +138,10 @@ function Middler(id) {
     }
 
     // The server component is actually a client socket connected to
-    // the distant SMB server.  I know, using a client socket to
-    // represent a server is awkward, but it's not a simple
-    // arrangement anyway.  This code primarily shuffles responses
-    // from the SMB server back to the appropriate client process.
+    // the distant server.  I know, using a client socket to represent
+    // a server is awkward, but it's not a simple arrangement anyway.
+    // This code primarily shuffles responses from the server back to
+    // the appropriate client process.
 
     this.setServer = function(val) {
         var myself = this;
@@ -218,7 +197,6 @@ function Middler(id) {
 
         client.on('data', function(x) {
             var packet = broker.parsePacket(x);
-            // var packet = new smb.SMBPacket(x);
             if(myself.collectPackets) {
                 reqPackets.push(packet);
             }

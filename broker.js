@@ -63,6 +63,10 @@ module.exports.Broker = function() {
     this.localactive = false;
     // var timerID;
 
+    this.getHash = function(m) {
+        return "N/A";
+    }
+
     this.getMiddlers = function() {
         return this.middlers;
     }
@@ -139,12 +143,12 @@ module.exports.Broker = function() {
                        addr:   this.middlers[x].getClientAddr(),
                        port:   this.middlers[x].getClientPort(),
                        dest:   this.middlers[x].getServerAddr(),
-                       domain: this.middlers[x].attributes.domain, // getDomain(),
-                       user:   this.middlers[x].attributes.username, // getUsername(),
-                       host:   this.middlers[x].attributes.hostname, // getHostname(),
-                       winver: this.middlers[x].attributes.winver, //getWinVer(),
-                       hash:   this.middlers[x].getHash(), // getHash(),
-                       htype:  this.middlers[x].attributes.hashtype, //getHashType(),
+                       domain: this.middlers[x].attributes.domain,
+                       user:   this.middlers[x].attributes.username,
+                       host:   this.middlers[x].attributes.hostname,
+                       winver: this.middlers[x].attributes.winver,
+                       hash:   this.getHash(this.middlers[x]), 
+                       htype:  this.middlers[x].attributes.hashtype,
                        age:    now.diff(this.middlers[x].getFreshness(), "seconds"),
                        active: this.middlers[x].getActive(),
                        current: x == currentID,

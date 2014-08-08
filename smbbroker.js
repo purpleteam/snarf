@@ -247,4 +247,17 @@ module.exports.SMBBroker = function() {
             clearInterval(middler.attributes.timerID);
         }
     }
+
+    this.getHash = function(m) {
+        var hash = "unknown"
+        switch(m.attributes.hashtype) {
+        case "NTLMv1":
+            hash = m.attributes.username + "::" + m.attributes.domain + ":" + m.attributes.hash + ":" + m.attributes.challenge;
+            break;
+        case "NTLMv2":
+            hash = m.attributes.username + "::" + m.attributes.domain + ":" + m.attributes.challenge + ":" + m.attributes.hash;
+            break;
+        }
+        return hash;
+    }
 }
