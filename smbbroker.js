@@ -54,7 +54,7 @@ module.exports.SMBBroker = function() {
 
     this.reviewServerPacket = function(packet, client, middler) {
         if(packet.commandCode != 0x2b) {
-            out.darkgreen("[" + myself.getID() + "] Server: " + packet.describe());
+            out.darkgreen("[" + middler.getID() + "] Server: " + packet.describe());
         }
 
         // this is the only tricky part here -- we don't ever want
