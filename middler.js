@@ -48,7 +48,7 @@ function Middler(id) {
     // but this is in anticipation of this functionality either
     // getting more cmoplicated in the future or a potential need to
     // subclass the Middler class for other protocols.  As such, we
-    // don't want the idea that these oitems are simply variables to
+    // don't want the idea that these items are simply variables to
     // get too firmly coupled to the rest of the Snarf system.
 
     this.setActive = function(state) {
@@ -116,9 +116,9 @@ function Middler(id) {
     }
 
     this.setClientInfo = function(addr, port, dest) {
-        clientIP = addr;
+        clientIP   = addr;
         clientPort = port;
-        serverIP = dest;
+        serverIP   = dest;
     }
 
     this.setBroker = function(b) {
@@ -145,18 +145,13 @@ function Middler(id) {
 
     this.setServer = function(val) {
         var myself = this;
-        server = val;
+        server     = val;
 
         server.on('data', function(x) {
             var packet = broker.parsePacket(x);
-            // var packet = new smb.SMBPacket(x);
             if(myself.collectPackets) {
                 respPackets.push(packet);
             }
-            if(packet.commandCode != 0x2b) {
-                out.darkgreen("[" + myself.getID() + "] Server: " + packet.describe());
-            }
-
             broker.reviewServerPacket(packet, client, myself);
         });
 
@@ -180,7 +175,7 @@ function Middler(id) {
 
     this.setOriginalClient = function(val) {
         var myself = this;
-        client = val;
+        client     = val;
 
         this.shutdown = function() {
             myself.expired = true;

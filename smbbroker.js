@@ -53,6 +53,10 @@ module.exports.SMBBroker = function() {
     }
 
     this.reviewServerPacket = function(packet, client, middler) {
+        if(packet.commandCode != 0x2b) {
+            out.darkgreen("[" + myself.getID() + "] Server: " + packet.describe());
+        }
+
         // this is the only tricky part here -- we don't ever want
         // to write to a closed socket, so we must trust other
         // sources of the "client" socket to set it to undefined
