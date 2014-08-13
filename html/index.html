@@ -45,10 +45,14 @@ $(function() {
     <p id="hash"></p>
 </div>
 
+<% if(editip) { %>
 <form id='ipform'>
   <b>Default IP:</b> <input id='ipval' name='ip' value='<%= defip %>' />
   <input type='button' value='change' onClick="$.ajax({url: '/set/defip/' + $('#ipval').val(), type: 'PATCH'})">
 </form>
+<% } else { %>
+<p><b>Next IP:</b> <%= defip %></p>
+<% } %>
 
 <table class="ui-widget" style="width: 100%">
     <tr>
