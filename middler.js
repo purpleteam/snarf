@@ -226,5 +226,16 @@ module.exports.NullMiddler = function(x) {
     });
 }
 
+module.exports.Relay = function(client, server) {
+    client.on('data', function(data) { server.write(data); });
+    server.on('data', function(data) { client.write(data); });
+    
+    client.on('end', function(data) { });
+    server.on('end', function(data) { });
+
+    client.on('error', function(data) { });
+    server.on('error', function(data) { });
+}
+
 module.exports.Middler = Middler;
 

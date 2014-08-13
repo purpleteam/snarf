@@ -158,6 +158,16 @@ module.exports.Broker = function() {
         return ret;
     }
 
+    this.countDups = function(from, to) {
+        var count = 0;
+        for(var m in this.middlers) {
+            if(this.middlers[m].getClientAddr() == from && this.middlers[m].getServerAddr() == to) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
     this.checkout = function() {
         return this.current;
     }
@@ -226,6 +236,5 @@ module.exports.Broker = function() {
             }).listen(this.port(), "127.0.0.1");
         }
     }
-
 }
 
