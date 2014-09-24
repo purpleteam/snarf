@@ -59,7 +59,7 @@ var fs         = require('fs');
 var cycle      = require("./cycle.js");
 
 out.red("SNARF - 0.2 - SMB Man in the Middle Attack Engine");
-out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (TBD)");
+out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com)");
 
 getopt = new Getopt([
     ['d', 'defaultip=IP'  , 'Default IP (think LLMNR or NBNS)'],
