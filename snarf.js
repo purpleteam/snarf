@@ -64,8 +64,8 @@ out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (TBD)");
 getopt = new Getopt([
     ['d', 'defaultip=IP'  , 'Default IP (think LLMNR or NBNS)'],
     ['f', 'file=FILE'     , 'Round-robin default destination from file'],
-    ['l', 'limit',        , 'Keep limit of 3 connections for each client/server pair (EXPERIMENTAL)'],
-    ['h', 'help',         , 'Show help and usage statement']
+    ['l',       , 'Keep limit of 3 connections for each client/server pair: EXPERIMENTAL'],
+    ['h',         , 'Show help and usage statement']
 ]);
 
 getopt.setHelp(
@@ -107,7 +107,8 @@ if(opt.options['defaultip']) {
     globals.defip   = function() { return roundrobin.shift() }
 } else {
     globals.editip = true;
-    globals.defip  = null;
+    globals.defip  = function() { return null; };
+    globals.defpeek = function() { return false; };
 }
 
 ctrl.ControlPanel(broker, 4001, globals);
