@@ -176,3 +176,8 @@ client = net.createServer(function(sock) {
 client.listen(445, bindip, function() {
     out.red("Interception server bound to " + bindip + ":445");
 });
+
+process.on('uncaughtException', function (err) {
+    out.red("Unknown error occurred... recovering:");
+    console.error(err.stack);
+});
