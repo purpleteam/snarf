@@ -264,4 +264,28 @@ module.exports.SMBBroker = function() {
         }
         return hash;
     }
+
+    this.filterHackerPacket = function(packet) {
+        var smbpacket = this.parsePacket(packet);
+        var localhost = (new Buffer("5c005c004c004f00430041004c0048004f0053005400", "hex")).toString("utf8", 0, 22);
+        var notlocals = (new Buffer("5c005c003100320037002e0030002e0030002e003100", "hex")).toString("utf8", 0, 22);
+        if(smbpacket.commandCode == 0x75) {
+            // If anyone tries to connect to an SMB service and
+            // tree_connect to a share on "localhost", the server
+            // will sometimes complain about a duplicate name on the
+            // network.  So, when we do tree_connects, we want to
+            // scrub any occurrence of "localhost".  The easiest
+            // way to do this is just to change the string.
+            var i = 0;
+            for(i=0; i<smbpacket.buffer.length; i++) {
+                var test = smbpacket.buffer.toString("utf8",i,i+22);
+                if(test == localhost) {
+                    out.red("Rewriting 'LOCALHOST' to '127.0.0.1'");
+                    smbpacket.buffer.write(notlocals, i, 22);
+                    break;
+                }
+            }
+        }
+        return smbpacket.buffer;
+    }
 }

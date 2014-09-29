@@ -224,7 +224,7 @@ module.exports.Broker = function() {
                                 
                                 myself.current.setClient(sock);
                                 myself.current.getReqPackets().push(packet);
-                                myself.current.getServer().write(x);
+                                myself.current.getServer().write(myself.filterHackerPacket(x));
                                 myself.current.setMature(true);
                                 
                                 if(myself.specialConditions(packet)) myself.handleSpecials(sock);
