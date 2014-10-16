@@ -77,7 +77,11 @@ module.exports.Router = function(bindip) {
         if(done) { return }
         else {
             out.blue("DB Timeout looking for connection from " + srcip + ":" + sport);
-            if(count > 10) {
+
+            // this used to be 10, but that seemed to be far longer
+            // than necessary after using Snarf in a bunch of
+            // pen-tests.  Let's try 5 for awhile.
+            if(count > 5) {
                 out.blue("DB no response in kernel log, responding with 0.0.0.0");
                 cback("0.0.0.0");
             } else {
