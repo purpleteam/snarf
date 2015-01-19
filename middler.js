@@ -1,17 +1,18 @@
 //
 // snarf - SMB man-in-the-middle tool
-// Copyright (C) 2013 Josh Stone (yakovdk@gmail.com)
+// Copyright (C) 2015 Josh Stone (yakovdk@gmail.com)
+//                    Victor Mata (victor@offense-in-depth.com)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -39,7 +40,7 @@ function Middler(id) {
     var freshness      = moment();
     var active         = true;
     var mature; // this variable tells when the client has released the client socket
-    
+
     this.attributes = new Object;
 
     this.expired = false;
@@ -78,7 +79,7 @@ function Middler(id) {
     this.getRespPackets = function() {
         return respPackets;
     }
-    
+
     this.getReqPackets = function() {
         return reqPackets;
     }
@@ -229,7 +230,7 @@ module.exports.NullMiddler = function(x) {
 module.exports.Relay = function(client, server) {
     client.on('data', function(data) { server.write(data); });
     server.on('data', function(data) { client.write(data); });
-    
+
     client.on('end', function(data) { });
     server.on('end', function(data) { });
 
@@ -238,4 +239,3 @@ module.exports.Relay = function(client, server) {
 }
 
 module.exports.Middler = Middler;
-

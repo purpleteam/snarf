@@ -1,12 +1,179 @@
 <html>
-  <head>
-    <title>Middler Listing</title>
-    <link rel="stylesheet" href="jquery-ui/css/sunny/jquery-ui-1.10.3.custom.css" />
-    <script src="jquery-ui/js/jquery-1.9.1.js"></script>
-    <script src="jquery-ui/js/jquery-ui-1.10.3.custom.min.js"></script>
-    <style>
-      body { font-size: 10pt; }
-      th, td { vertical-align: middle; }
-    </style>
-  </head>
-  <body>
+    <head>
+        <title>Middler Listing</title>
+        <link rel="stylesheet" href="jquery-ui-1.11.2.custom-peppergrinder/jquery-ui.css" />
+        <script src="jquery-ui-1.11.2.custom-peppergrinder/external/jquery/jquery.js"></script>
+        <script src="jquery-ui-1.11.2.custom-peppergrinder/jquery-ui.js"></script>
+        <style>
+            body {
+                font: 11px "Trebuchet MS", sans-serif;
+            }
+            th, td { vertical-align: middle; }
+
+            .ui-button .ui-button-text {
+                line-height: 0.9em;
+            }
+
+            .ui-accordion-content {
+                margin:0;
+                padding:10px;
+                max-height:110px;
+            }
+
+            .ui-accordion-header {
+                line-height:10px;
+                margin:0px;
+            }
+
+            h3.bigheader {
+                height:8px;
+            }
+
+            hr.separate {
+              border: 0;
+              height: 0;
+              border-top: 1px solid rgba(0, 0, 0, 0.1);
+              border-bottom: 1px solid rgba(255, 255, 255, 0.3)
+            }
+
+            #tab-control {
+                position:relative;
+                height:175px;
+            }
+
+            /********************************************************/
+
+            #div_target {
+                position:absolute;
+                top:10px;
+                left:13px;
+                height:230px;
+                width:275px;
+            }
+
+            #separator_1 {
+                position:absolute;
+                top:22px;
+                left:0;
+                width:100%;
+            }
+
+            #div_singletarget {
+                position:absolute;
+                top:35px;
+                left:1;
+                width:350px;
+            }
+
+            #target_single {
+                margin: 0px;
+                margin-bottom: 10px;
+                width: 105px;
+                height: 22px;
+                padding: 3px 5px;
+                border: 1px solid #ccc;
+            }
+
+            #separator_2 {
+                position:absolute;
+                top:57px;
+                left:0;
+                width:100%;
+            }
+
+            #div_refresh {
+                position:absolute;
+                top:70px;
+                left:0px;
+            }
+
+            #refreshval {
+                margin: 0px;
+                margin-bottom: 10px;
+                width: 105px;
+                height: 22px;
+                padding: 3px 5px;
+                border: 1px solid #ccc;
+            }
+
+            /********************************************************/
+
+            #div_targetlist {
+                position:absolute;
+                top:8px;
+                left:300px;
+                width:183px;
+            }
+
+            #div_target_control {
+                position:absolute;
+                top:15px;
+                left:301px;
+            }
+
+            #target_edit {
+                position: absolute;
+                top:155px;
+                left:0;
+                margin: 0px;
+                margin-bottom: 10px;
+                width: 120px;
+                height: 22px;
+                padding: 3px 5px;
+                border: 1px solid #ccc;
+            }
+
+            #target_add {
+                position:absolute;
+                top:155px;
+                left:123px;
+            }
+
+            #target_remove {
+                position:absolute;
+                top:155px;
+                left:154px;
+            }
+
+            /********************************************************/
+
+
+            #div_blacklist {
+                position:absolute;
+                top:8px;
+                left:500px;
+                width:183px
+            }
+
+            #div_blacklist_control {
+                position:absolute;
+                top:15px;
+                left:501px;
+            }
+
+            #blacklist_edit {
+                position: absolute;
+                top:155px;
+                left:0px;
+                margin: 0px;
+                margin-bottom: 10px;
+                width: 120px;
+                height: 22px;
+                padding: 3px 5px;
+                border: 1px solid #ccc;
+            }
+
+            #blacklist_add {
+                position:absolute;
+                top:155px;
+                left:123px;
+            }
+
+            #blacklist_remove {
+                position:absolute;
+                top:155px;
+                left:154px;
+            }
+        </style>
+    </head>
+<body>

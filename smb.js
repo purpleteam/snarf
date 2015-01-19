@@ -1,17 +1,18 @@
 //
 // snarf - SMB man-in-the-middle tool
-// Copyright (C) 2013 Josh Stone (yakovdk@gmail.com)
+// Copyright (C) 2015 Josh Stone (yakovdk@gmail.com)
+//                    Victor Mata (victor@offense-in-depth.com)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -102,7 +103,7 @@ var commands = {
 function scrubSMB2(buffer) {
     var len = buffer.readUInt16LE(37)+40-2;
     var buf = buffer.slice(40, len);
-    
+
     for(var i=40; i < len - 5; i++) {
         var test = buffer.toString("utf8", i, i+5);
         if(test == "SMB 2") {
@@ -156,12 +157,12 @@ function SMBPacket(buffer) {
     } else {
         this.command = "0x" + this.commandCode.toString(16) + " : unknown";
     }
-    
+
     if(this.commandCode == 0x72) {
         var len       = buffer.readUInt16LE(37)+40-2;
         var diabuffer = buffer.slice(40, len).toString();
         var dialects  = diabuffer.split(/\x00\x02/);
-        this.ntlmoffset = dialects.indexOf("NT LM 0.12"); 
+        this.ntlmoffset = dialects.indexOf("NT LM 0.12");
         scrubSMB2(buffer);
 
         // out.red("NT LM 0.12 offset is " + this.ntlmoffset);
@@ -194,7 +195,7 @@ function SMBPacket(buffer) {
 
         // If different clients specify different authentication dialects,
         // then we might end up with a mismatch.  In SMB_COM_NEGOTIATE
-        // responses, we need to make sure we choose the same one.  In 
+        // responses, we need to make sure we choose the same one.  In
         // testing so far, they always seem to choose the last one.  This
         // may not always be the case, and could require enhancing in the
         // future.
@@ -203,7 +204,7 @@ function SMBPacket(buffer) {
 
             // we add len to 40 (the offset for the dialect list), and then
             // subtract two because the two bytes used to specify the length
-            // count.  In later NodeJS versions, the overrun is fine, but 
+            // count.  In later NodeJS versions, the overrun is fine, but
             // older versions throw an exception.
 
             var len       = packet.buffer.readUInt16LE(37)+40-2;
@@ -215,7 +216,7 @@ function SMBPacket(buffer) {
             this.buffer.writeUInt16LE(packet.ntlmoffset, 37);
         }
         return true;
-    }        
+    }
 
     this.setAsAnswerToMod = function(packet, uid) {
         var processid = packet.buffer.readUInt16LE(30);
@@ -243,7 +244,7 @@ function SMBPacket(buffer) {
         return true;
     }
 
-    
+
 }
 
 function CredHunter(packet) {
@@ -259,7 +260,7 @@ function CredHunter(packet) {
         var header  = packet.slice(4,36);
         var bloblen = packet.readUInt16LE(36+15);
         var secblob = packet.slice(36+27, 36+27+bloblen);
-        
+
         // NTLMSSP
         for(var i = 0; i < secblob.length - 7; i++) {
             if(secblob.toString('utf8', i, i+7) == "NTLMSSP") {
@@ -312,4 +313,3 @@ function CredHunter(packet) {
 module.exports.CredHunter = CredHunter;
 module.exports.SMBPacket = SMBPacket;
 module.exports.SMBEchoRequest = SMBEchoRequest;
-

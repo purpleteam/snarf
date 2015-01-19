@@ -1,17 +1,18 @@
 //
 // snarf - SMB man-in-the-middle tool
-// Copyright (C) 2013 Josh Stone (yakovdk@gmail.com)
+// Copyright (C) 2015 Josh Stone (yakovdk@gmail.com)
+//                    Victor Mata (victor@offense-in-depth.com)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -21,7 +22,7 @@
 // This module implements a small state machine to carry out SMB
 // authentication.  The original design would reuse the authentication
 // packets processed at the beginning of the victim's communication
-// with the middled server.  
+// with the middled server.
 //
 // This usually would work, but occasionally issues were encountered
 // during penetration tests.  As one may imagine, the worst time to
@@ -60,7 +61,7 @@ SMBPacket = function(packet) {
     this.smb_flags     = this.smb_body.readUInt8(9);
     this.smb_flags2    = this.smb_body.readUInt16LE(10);
     this.smb_pidh      = this.smb_body.readUInt16LE(12);
-    this.smb_sig       = 
+    this.smb_sig       =
         this.smb_body.readUInt32LE(14) << 32 +
         this.smb_body.readUInt32LE(18);
     this.smb_res       = this.smb_body.readUInt16LE(22);
@@ -72,7 +73,7 @@ SMBPacket = function(packet) {
     this.rest_len      = this.smb_rest.length;
 }
 
-// 
+//
 // This is a state machine with functions that generate appropriate
 // responses to inbound SMB requests from the hacker tool who will be
 // inserted into existing connections.
@@ -155,12 +156,12 @@ module.exports.SMBAuth = function(sock) {
         return Buffer.concat([header,body]);
     }
 
-    // 
+    //
     // After negotiating the protocol version, the client initiates
     // authentication.  We need to provide a server challenge so that
     // the client can put together a "security blob" for us.
     //
-    
+
     this.challenge = function(packet) {
         var header = packet.smb_header;
         header[9] = packet.smb_flags | 0x80;
@@ -214,7 +215,7 @@ module.exports.SMBAuth = function(sock) {
                               "4a006f0073006800200053002e002000" +
                               "2600200056006900630074006f007200" +
                               "20004d002e000000", "hex");
-        
+
         body.writeUInt16LE(body.length-11, 9);
         return Buffer.concat([header, body]);
     }

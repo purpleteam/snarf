@@ -1,17 +1,18 @@
 //
 // snarf - SMB man-in-the-middle tool
-// Copyright (C) 2013 Josh Stone (yakovdk@gmail.com)
+// Copyright (C) 2015 Josh Stone (yakovdk@gmail.com)
+//                    Victor Mata (victor@offense-in-depth.com)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -26,7 +27,7 @@ var moment = require("moment");
 //
 // Don't use Broker by itself!  It should be subclassed
 // and augmented in order to work right.  Basically, the
-// idea is that this object maintains a list of available 
+// idea is that this object maintains a list of available
 // Middler objects, each of which represent a channel
 // that may be interacted with.
 //
@@ -34,10 +35,10 @@ var moment = require("moment");
 // such as with the SMBBroker() class defined below.  The
 // general interface is as follows:
 //
-//    inTransition() 
+//    inTransition()
 //    Returns true if the MITM connection has not yet fully
 //    authenticated.
-//           
+//
 //    transit()
 //    This function will manage the "fake" authentication needed
 //    during the transitional period before handoff to the normal
@@ -48,9 +49,9 @@ var moment = require("moment");
 //    necessary data structure.  It should have a "describe()"
 //    function.
 //
-//    specialConditions() - 
+//    specialConditions() -
 //    Detect a special case during relayed communications.
-// 
+//
 //    handleSpecials()
 //    Take action when specialConditions() returns true.
 //
@@ -77,7 +78,7 @@ module.exports.Broker = function() {
     this.setCurrentMiddler = function(n) {
         out.red("Changing middler to #"+n);
         this.current = this.middlers[n];
-    }           
+    }
 
     this.getCurrentID = function() {
         return this.middlers.indexOf(this.current);
@@ -89,7 +90,7 @@ module.exports.Broker = function() {
             this.current = this.middlers[0];
         }
     }
-    
+
     this.activateKeepAlive = function(middler) {
         return true;
     }
@@ -133,7 +134,7 @@ module.exports.Broker = function() {
     this.listMiddlers = function() {
         var ret = [];
         var currentID = this.getCurrentID();
-        
+
         for(x=0; x<this.middlers.length; x++) {
             var addr = this.middlers[x].getClientAddr();
             var port = this.middlers[x].getClientPort();
@@ -147,7 +148,7 @@ module.exports.Broker = function() {
                        user:   this.middlers[x].attributes.username,
                        host:   this.middlers[x].attributes.hostname,
                        winver: this.middlers[x].attributes.winver,
-                       hash:   this.getHash(this.middlers[x]), 
+                       hash:   this.getHash(this.middlers[x]),
                        htype:  this.middlers[x].attributes.hashtype,
                        age:    now.diff(this.middlers[x].getFreshness(), "seconds"),
                        active: this.middlers[x].getActive(),
@@ -217,16 +218,16 @@ module.exports.Broker = function() {
                                 var server  = middler.getServer();
                                 myself.transit(packet, sock, middler, server);
                             } else {
-                                
+
                                 // Once we have completed our authentication
                                 // handshake, the remainder of the session is to
                                 // pass packets back and forth.
-                                
+
                                 myself.current.setClient(sock);
                                 myself.current.getReqPackets().push(packet);
                                 myself.current.getServer().write(myself.filterHackerPacket(x));
                                 myself.current.setMature(true);
-                                
+
                                 if(myself.specialConditions(packet)) myself.handleSpecials(sock);
                             }
                             myself.count += 1;
@@ -237,4 +238,3 @@ module.exports.Broker = function() {
         }
     }
 }
-
