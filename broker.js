@@ -117,8 +117,8 @@ module.exports.Broker = function() {
 
         //this.deactivateKeepAlive();
         this.deactivateKeepAlive(m); // this.middlers[m].getServer());
-        out.red("Removing Middler #"+m);
-        this.middlers[m].setActive(false);
+        out.red("Removing Middler #"+m.getID());
+        m.setActive(false);
     }
 
     this.resetIDs = function() {
@@ -195,7 +195,8 @@ module.exports.Broker = function() {
                     // something like "NT_STATUS_CONNECTION_RESET"
 
                     if(currentMiddler) {
-                        myself.deactivateKeepAlive(currentMiddler); // currentMiddler.getServer());
+                        //myself.deactivateKeepAlive(currentMiddler); // currentMiddler.getServer());
+                        myself.deactivateKeepAlive(currentMiddler);
 
                         sock.on('end', function(x) {
                             myself.current.setClient(undefined);

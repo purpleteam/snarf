@@ -165,7 +165,7 @@ function Middler(id) {
             server.pause();
 
             out.red("Encountered error from server");
-            broker.deactivateMiddler(id);
+            broker.deactivateMiddler(myself);
         });
     }
 

@@ -10,23 +10,15 @@ Added auto-refresh component
 Added persistent tab collapse to enhance usability with auto-refresh component
 Added ability to save Responder.py-style (-r) hashes
 Added Snarf ID# to hash dialog
-Upgraded to jQuery 1.11.2
+Upgraded to jQuery UI 1.11.2
 
-
-TODO: ENHANCEMENTS
-------------------
-Add settings tab; integrate all application arguments into web interface via settings
-Add ability to add/remove final iptables rule in CLI and web interface
-Add Remote Desktop Protocol (SSL-only) component
-Add hostname and OS version of client connection
-
-
-TODO: BUGS
-----------
-Several issues originating from blocking component:
-  - New snarf session -> Block session -> Remove session from blacklist -> Attempt to connect again
-  - possibly caused by 'VC' flag; see smbbroker.js : lines 179-191
-Assign STDOUT colors according to snarf component (error/web/broker/middler/etc.)
-Windows version and build number are inaccurate for Windows XP systems -- possibly offset issue via null byte padding
-Terminating sessions raises error events -- possibly due to keepalive
-Blacklist 'pop' function does not properly remove all instances of IP address
+BUGS
+----
+Fixed typo in smbbroker.js(line:227) - s/middler.attributes.timreID/middler.attributes.timerID
+Fixed issue affecting deactivateKeepAlive().
+    The function would not properly execute when called from server.on('error'). The
+    variable passed from broker.deactivateMiddler() was type integer, representing the
+    middler ID. However, the deactivateKeepAlive() function expected a middler object.
+    The code was modified(middler.js-line:168) to pass the current middler object. This
+    seemed to work well since it supported other areas that called the function with a
+    middler object. Two additional lines (broker.js-line:120-121) were modified accordingly.

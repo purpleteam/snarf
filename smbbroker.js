@@ -172,7 +172,7 @@ module.exports.SMBBroker = function(globals) {
                     // to save all hashes.
                     if(globals.responderhash) {
                         out.blue("Writing responder-style hash format");
-                        globals.betaHash(middler.getClientAddr(), n.htype, hashstring + '\n');
+                        globals.responderhash(middler.getClientAddr(), n.htype, hashstring + '\n');
                     }
                 }
 
@@ -274,7 +274,7 @@ module.exports.SMBBroker = function(globals) {
             }, 12 * 60000); // every 12 minutes is a safe frequency
         } else {
             db.red("ERROR starting keepalive -- no userid was detected?");
-            middler.attributes.timreID = null;
+            middler.attributes.timerID = null;
         }
     }
 
