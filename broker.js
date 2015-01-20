@@ -195,8 +195,7 @@ module.exports.Broker = function() {
                     // something like "NT_STATUS_CONNECTION_RESET"
 
                     if(currentMiddler) {
-                        //myself.deactivateKeepAlive(currentMiddler); // currentMiddler.getServer());
-                        myself.deactivateKeepAlive(currentMiddler);
+                        myself.deactivateKeepAlive(currentMiddler); // currentMiddler.getServer());
 
                         sock.on('end', function(x) {
                             myself.current.setClient(undefined);
