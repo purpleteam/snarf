@@ -180,6 +180,6 @@ module.exports.ControlPanel = function(broker, port, globals) {
         res.redirect('/');
     });
 
-    app.listen(port);
+    app.listen(port, '127.0.0.1');
     out.blue("Created control server, direct browser to http://localhost:" + port + "/");
 }
