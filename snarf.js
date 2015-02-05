@@ -158,6 +158,12 @@ client = net.createServer(function(sock) {
         if(tip == bindip || tip == "0.0.0.0") {
             if(globals.target) { // && globals.target != "0.0.0.0") {
                 var target = globals.target();
+                if(target == null) {
+                    out.red("Target is NULL -- did you specify a default target with -d or -f?");
+                    out.red("This is a session you could have used if a target was specified!");
+                    midl.NullMiddler(sock);
+                    return;
+                }
                 if(!globals.blacklist.ok(sock.remoteAddress)) {
                     midl.NullMiddler(sock);
                     out.red("Blacklist prevents relaying " + sock.remoteAddress + " to default destination");
@@ -180,6 +186,11 @@ client = net.createServer(function(sock) {
                 midl.NullMiddler(sock);
                 return;
             }
+        }
+        if(tip == null) {
+            out.red("Target is NULL -- did you specify a default target with -d or -f?");
+            out.red("This is a session you could have used if a target was specified!");
+            midl.NullMiddler(sock);
         }
         out.red("Destination is " + tip);
         out.red("Broker currently has " + broker.countDups(sock.remoteAddress, tip) + " similar connections");
