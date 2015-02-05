@@ -57,7 +57,7 @@ var fs         = require('fs');
 var cycle      = require("./cycle.js");
 var bl         = require("./blacklist.js");
 
-out.red("SNARF - 0.3 - SMB Man in the Middle Attack Engine");
+out.red("SNARF - 0.3.1 - SMB Man in the Middle Attack Engine");
 out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com)");
 
 getopt = new Getopt([
@@ -93,7 +93,6 @@ var client;
 // Initialize the blacklist
 //
 
-out.red("BLACKLIST option " + opt.options['blacklist']);
 if(opt.options['blacklist']) {
     globals.blacklist = bl.loadBlacklist(opt.options['blacklist']);
 } else {
@@ -225,6 +224,11 @@ client.listen(445, bindip, function() {
 });
 
 process.on('uncaughtException', function (err) {
-    out.red("Unknown error occurred... recovering:");
-    console.error(err.stack);
+    if(err == "Error: listen EADDRINUSE") {
+        out.red("Error binding to port 445 -- is Samba running perhaps?");
+        process.exit(2);
+    } else {
+        out.red("Unknown error occurred... recovering:");
+        console.error(err.stack);
+    }
 });
