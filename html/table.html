@@ -1,0 +1,78 @@
+<script>
+  $(function() {
+    $(".action").map(function(x) {
+      $(this).on('click', function(event) {
+        $.ajax({ url: $(this).attr('url'),
+        context: document.body
+      }).done(function() {
+        $.ajax({ url: '/poll',
+          type: 'GET',
+          success: function(data) { $("#wtf").html(data); }
+        });
+      });
+    });
+    $("[data-toggle='tooltip']").tooltip();
+    $(".hash").on('click', function() {
+      var id = $(this).data('id');
+      var hash = $(this).data('hash');
+      $(".modal-header #modal-head-text").text('Session #'+id);
+      $(".modal-body #modal-body-text").text(hash);
+    });
+  });
+});
+</script>
+
+<table class="table table-hover table-condensed table-middler" align="center">
+  <thead>
+    <tr>
+      <th style="width:15px">ID</th>
+      <th style="width:20px">Current?</th>
+      <th style="width:40px">Source</th>
+      <th style="width:40px">Destination</th>
+      <th style="width:50px">Username</th>
+      <th style="width:50px">Host</th>
+      <th style="width:25px">Fresh</th>
+      <th style="width:25px">Hash</th>
+      <th style="width:75px">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+
+  <% middlers.forEach(function(middler) { %>
+    <% if(middler.active) { %>
+      <% if(middler.expired) { %>
+        <tr>
+      <% } else { %>
+        <tr class="danger">
+      <% } %>
+          <td><%= middler.id %></td>
+          <td class="text-center"><%= middler.current ? "&rarr;" : "&nbsp;" %></td>
+          <td><%= middler.addr %></td>
+          <td><%= middler.dest %></td>
+          <td><%= middler.domain %>\<%= middler.user %></td>
+          <td><%= middler.host %><br/><%= middler.winver %></td>
+          <td><%= middler.age %>s</td>
+          <td><a class="btn btn-default btn-xs hash" data-toggle="modal" data-target="#modal-hash" data-hash="<%= middler.hash %>" data-id="<%= middler.id %>" href="#modal-hash">
+            <%= middler.htype %>
+          </a>
+        </td>
+        <td>
+          <button type="button" class="btn btn-primary btn-xs action" url="/choose/<%= middler.id %>" data-toggle="tooltip" data-placement="top" title="Select Session">
+            <span class="glyphicon glyphicon-star"></span>&nbsp;
+          </button>
+          <button type="button" class="btn btn-primary btn-xs action" url="/expire/<%= middler.id %>" data-toggle="tooltip" data-placement="top" title="Expire Session">
+            <span class="glyphicon glyphicon-off"></span>&nbsp;
+          </button>
+          <button type="button" class="btn btn-primary btn-xs action" url="/block/add/<%= middler.addr %>" data-toggle="tooltip" data-placement="top" title="Block Session">
+            <span class="glyphicon glyphicon-thumbs-down"></span>&nbsp;
+          </button>
+          <button type="button" class="btn btn-primary btn-xs btn-danger action" url="/kill/<%= middler.id %>" data-toggle="tooltip" data-placement="top" title="Kill Session">
+            <span class="glyphicon glyphicon-remove"></span>&nbsp;
+          </button>
+        </td>
+      </tr>
+    <% } %>
+  <% }) %>
+
+  </tbody>
+</table>

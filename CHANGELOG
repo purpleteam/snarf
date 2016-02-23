@@ -1,16 +1,18 @@
 
-Version 0.3 (Released: TBD)
+Version 0.4 (Released: TBD)
 
 NEW
 ---
-Added tab functionality to web interface; introducing control tab
+Added navigation menu to web interface; introducing a dedicated settings page
 Integrated blacklist component into web interface
 Integrated single/cycle target modes into web interface
-Added auto-refresh component
-Added persistent tab collapse to enhance usability with auto-refresh component
+Added client-side ajax polling (major improvement over auto-refresh)
+Implemented refresh interval setting on navigation menu
 Added ability to save Responder.py-style (-r) hashes
 Added Snarf ID# to hash dialog
-Upgraded to jQuery UI 1.11.2
+Complete redesign of web interface; now using Bootstrap instead of jQuery UI
+Added advanced help/usage statement to console
+
 
 BUGS
 ----

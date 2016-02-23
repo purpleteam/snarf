@@ -1,0 +1,229 @@
+<% include header.html %>
+
+<script>
+
+function notify(message) {
+  $("#notify_message").text(message);
+  $("#modal_notify").modal('show');
+}
+
+function reload() {
+  window.location.reload(true);
+}
+
+$(function() {
+  $(".nav a:contains('Settings')").parent().addClass('active');
+
+  $("#target_single_save").on('click', function(event) {
+    $.ajax({ url: '/target/mode/single/' + $("#target_single_initial").val(),
+             type: 'GET',
+             error: function() { reload(); }
+    }).done(function() { reload(); });
+  });
+
+  $("#target_cycle").on('click', function(event) {
+    if(<%= targetlist.length %> > 0) {
+      $.ajax({ url: '/target/mode/cycle/',
+               type: 'GET',
+               error: function() { reload(); }
+      }).done(function() { reload(); });
+    } else {
+      notify('Cycle list is empty. When switching to ' +
+             'cycle mode, at least one target IP address ' +
+             'must be defined.');
+    }
+  });
+
+  $("#target_single_set").on('click', function(event) {
+    $.ajax({ url: '/set/target/' + $('#target_single_address').val(), type: 'GET'
+    }).done(function() { reload(); });
+  });
+
+  $("#target_cycle_add").on('click', function(event) {
+    $.ajax({ url: '/target/add/' + $('#target_cycle_address').val(), type: 'GET'
+    }).done(function() { reload(); });
+  });
+
+  // #target_cycle_remove
+  $(".remove").map(function(x) {
+    $(this).on('click', function(event) {
+      $.ajax({ url: $(this).attr('url'),
+               context: document.body
+      }).done(function() { reload(); });
+    });
+  });
+
+
+  $("#blacklist_add").on('click', function(event) {
+    $.ajax({ url: '/block/add/' + $('#blacklist_address').val(), type: 'GET'
+    }).done(function() { reload(); });
+  });
+
+
+  $("#modal_notify_close").on('click', function(event) { reload(); });
+
+  if(<%= targetsingle %>) {
+    $("#target_single").addClass('active');
+  } else {
+    $("#target_cycle").addClass('active');
+    $(".target_single_controls").prop('disabled', true);
+    $(".target_cycle_controls").prop('disabled', true);
+    $(".remove").prop('disabled', true);
+  }
+
+});
+
+</script>
+
+<!-- Modal -->
+<div class="modal" style="font-size: 12px" tabindex="-1" role="dialog" id="modal_target_single">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" id="modal-head-text">Set Single Target</h4>
+      </div>
+      <div class="modal-body">
+        <label class="control-label" for="target_single_switch">Target IP Address:</label>
+        <input class="form-control input-sm" type="text" id="target_single_initial">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="target_single_save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" style="font-size: 12px" tabindex="-1" role="dialog" id="modal_notify">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Notification</h4>
+      </div>
+      <div class="modal-body">
+        <p id="notify_message">Loading...</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="modal_notify_close">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="font-size: 12px"> <!-- Main Container -->
+  <div class="row center"> <!-- Parent Row -->
+    <div class="col-md-7"> <!-- Main:Left Section -->
+      <div class="row">
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+
+            <div class="col-md-6"> <!-- Inner: Left -->
+              <div class="row">
+              <div class="panel panel-default">
+                <div class="panel-heading settings-padding-sm">Target Mode</div>
+                <div class="panel-body text-center">
+                  <h4 id="target_current">Current Target: <%= target %></h4>
+                  <div class="btn-group" data-toggle="buttons">
+                    <label class="btn btn-default btn-sm" data-toggle="modal" data-target="#modal_target_single" id="target_single">
+                      <input type="radio" autocomplete="off">Single
+                    </label>
+                    <label class="btn btn-default btn-sm" id="target_cycle">
+                      <input type="radio" autocomplete="off">Cycle
+                    </label>
+                  </div>
+                </div>
+              </div>
+              </div>
+
+              <div class="row">
+                <div class="panel panel-default">
+                  <div class="panel-heading settings-padding-sm">Target (Single)</div>
+                  <div class="panel-body">
+                    <p>
+                      Single Target Mode will designate one IP address for all incoming
+                      connections.
+                    </p>
+                    <div class="input-group">
+                      <span class="input-group-btn">
+                        <button type="button" class="btn btn-default btn-sm target_single_controls" id="target_single_set">Set</button>
+                      </span>
+                      <input class="form-control input-sm target_single_controls" type="text" placeholder="Target" id="target_single_address">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6"> <!-- Inner: Right -->
+              <div class="panel panel-default" >
+                <div class="panel-heading settings-padding-sm">Target (Cycle)</div>
+                <div class="panel-body">
+                  <p>
+                    Cylce Target Mode will rotate one IP address for each individual
+                    connection.
+                    <u>Note</u>: Cycle mode must first be disabled to modify the cycle list.
+                  </p>
+                  <div class="list-group panel-settings-body">
+                    <!-- <div class="list-group-item settings-padding-sm">
+                      <button class="btn btn-primary btn-xs btn-danger"><i class="fa fa-times"></i></button>
+                      &nbsp;10.1.1.200
+                    </div> -->
+                    <% targetlist.forEach(function(cycle_ip) { %>
+                      <div class="list-group-item settings-padding-sm">
+                        <button class="btn btn-primary btn-xs btn-danger remove" url="/target/remove/<%= cycle_ip %>"><i class="fa fa-times"></i></button>
+                        &nbsp;<%= cycle_ip %>
+                      </div>
+                    <% }) %>
+                  </div>
+                  <div class="input-group">
+                    <input class="form-control input-sm target_cycle_controls" type="text" placeholder="Target" id="target_cycle_address">
+                    <span class="input-group-btn">
+                      <button class="btn btn-default btn-sm target_cycle_controls" type="button" id="target_cycle_add">+</button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- End: Inner Right -->
+
+          </div> <!-- End: Main Left Panel Body -->
+        </div> <!-- End: Main Left Panel (Headless) -->
+
+      </div> <!-- End: Row -->
+    </div> <!-- End: Left Main Section -->
+
+    <div class="col-md-4">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <div class="panel panel-default">
+            <div class="panel-heading settings-padding-sm">Blacklist</div>
+            <div class="panel-body">
+              <p>
+                Assign a list of IP addresses to prevent further connectivity to
+                the application.
+              </p>
+              <div class="list-group panel-settings-body">
+                <% blacklist.forEach(function(blacklist_ip) { %>
+                  <div class="list-group-item settings-padding-sm">
+                    <button class="btn btn-primary btn-xs btn-danger remove" url="/block/remove/<%= blacklist_ip %>"><i class="fa fa-times"></i></button>
+                    &nbsp;<%= blacklist_ip %>
+                  </div>
+                <% }) %>
+              </div>
+              <div class="input-group">
+                <input class="form-control input-sm" type="text" placeholder="Target" id="blacklist_address">
+                <span class="input-group-btn">
+                  <button class="btn btn-default btn-sm" type="button" id="blacklist_add">+</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- Parent Row -->
+
+</div> <!-- Main Container -->
+<% include footer.html %>

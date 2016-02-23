@@ -1,179 +1,99 @@
 <html>
     <head>
         <title>Middler Listing</title>
-        <link rel="stylesheet" href="jquery-ui-1.11.2.custom-peppergrinder/jquery-ui.css" />
-        <script src="jquery-ui-1.11.2.custom-peppergrinder/external/jquery/jquery.js"></script>
-        <script src="jquery-ui-1.11.2.custom-peppergrinder/jquery-ui.js"></script>
+        <link rel="stylesheet" href="bootstrap-3.3.6-dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="bootstrap-3.3.6-dist/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="font-awesome-4.3.0/css/font-awesome.min.css">
+        <script src="jquery-1.11.2.min.js"></script>
+        <script src="bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
         <style>
-            body {
-                font: 11px "Trebuchet MS", sans-serif;
-            }
-            th, td { vertical-align: middle; }
-
-            .ui-button .ui-button-text {
-                line-height: 0.9em;
-            }
-
-            .ui-accordion-content {
-                margin:0;
-                padding:10px;
-                max-height:110px;
-            }
-
-            .ui-accordion-header {
-                line-height:10px;
-                margin:0px;
-            }
-
-            h3.bigheader {
-                height:8px;
-            }
-
-            hr.separate {
-              border: 0;
-              height: 0;
-              border-top: 1px solid rgba(0, 0, 0, 0.1);
-              border-bottom: 1px solid rgba(255, 255, 255, 0.3)
-            }
-
-            #tab-control {
-                position:relative;
-                height:175px;
-            }
-
-            /********************************************************/
-
-            #div_target {
-                position:absolute;
-                top:10px;
-                left:13px;
-                height:230px;
-                width:275px;
-            }
-
-            #separator_1 {
-                position:absolute;
-                top:22px;
-                left:0;
-                width:100%;
-            }
-
-            #div_singletarget {
-                position:absolute;
-                top:35px;
-                left:1;
-                width:350px;
-            }
-
-            #target_single {
-                margin: 0px;
-                margin-bottom: 10px;
-                width: 105px;
-                height: 22px;
-                padding: 3px 5px;
-                border: 1px solid #ccc;
-            }
-
-            #separator_2 {
-                position:absolute;
-                top:57px;
-                left:0;
-                width:100%;
-            }
-
-            #div_refresh {
-                position:absolute;
-                top:70px;
-                left:0px;
-            }
-
-            #refreshval {
-                margin: 0px;
-                margin-bottom: 10px;
-                width: 105px;
-                height: 22px;
-                padding: 3px 5px;
-                border: 1px solid #ccc;
-            }
-
-            /********************************************************/
-
-            #div_targetlist {
-                position:absolute;
-                top:8px;
-                left:300px;
-                width:183px;
-            }
-
-            #div_target_control {
-                position:absolute;
-                top:15px;
-                left:301px;
-            }
-
-            #target_edit {
-                position: absolute;
-                top:155px;
-                left:0;
-                margin: 0px;
-                margin-bottom: 10px;
-                width: 120px;
-                height: 22px;
-                padding: 3px 5px;
-                border: 1px solid #ccc;
-            }
-
-            #target_add {
-                position:absolute;
-                top:155px;
-                left:123px;
-            }
-
-            #target_remove {
-                position:absolute;
-                top:155px;
-                left:154px;
-            }
-
-            /********************************************************/
-
-
-            #div_blacklist {
-                position:absolute;
-                top:8px;
-                left:500px;
-                width:183px
-            }
-
-            #div_blacklist_control {
-                position:absolute;
-                top:15px;
-                left:501px;
-            }
-
-            #blacklist_edit {
-                position: absolute;
-                top:155px;
-                left:0px;
-                margin: 0px;
-                margin-bottom: 10px;
-                width: 120px;
-                height: 22px;
-                padding: 3px 5px;
-                border: 1px solid #ccc;
-            }
-
-            #blacklist_add {
-                position:absolute;
-                top:155px;
-                left:123px;
-            }
-
-            #blacklist_remove {
-                position:absolute;
-                top:155px;
-                left:154px;
-            }
+          .bs-example {
+            margin: 20px;
+          }
+          .table-middler {
+            table-layout: fixed;
+            width: 1100px;
+            font-size: 12px;
+            word-wrap: break-word;
+          }
+          .table-middler-th-sm {
+            width: 25px;
+          }
+          .table-middler-th-md {
+            width: 50px;
+          }
+          #modal-body-text {
+            font-size: 12px;
+            word-wrap: break-word;
+          }
+          .panel-settings {
+            width: 300px;
+            font-size: 12px;
+          }
+          .settings-padding-sm {
+            padding: 4px;
+          }
+          .panel-settings-body {
+            padding-top: 0px;
+            max-height: 120px;
+            overflow-y: auto;
+          }
+          .center {
+            margin-left: auto;
+            margin-right: auto;
+          }
+          .alert-padding {
+            padding-top: 10px;
+            padding-bottom: 8px;
+          }
         </style>
+        <script>
+        $(function() {
+          $(document).ready(function() {
+              document.getElementById("refresh_interval").placeholder = localStorage.getItem("refresh")/1000;
+          });
+          $("#refresh_set").on('click', function(event) {
+            localStorage.setItem("refresh", ($('#refresh_interval').val()*1000));
+            document.getElementById("refresh_interval").value = "";
+            document.getElementById("refresh_interval").placeholder = localStorage.getItem("refresh")/1000;
+          });
+        });
+        </script>
     </head>
 <body>
+
+  <!-- Static navbar -->
+  <nav class="navbar navbar-default navbar-static-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Snarf v0.3</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/">Home</a></li>
+          <li><a href="settings">Settings</a></li>
+          <li><a href="#about">About</a></li>
+          <li class="divider-vertical"></li>
+          <li class="dropdown">
+            <a class="dropdown-toggle" data-target="testdropdown" href="#" data-toggle="dropdown">Refresh <i class="fa fa-arrow-circle-down"></i></a>
+            <div class="dropdown-menu" style="padding: 15px; padding-bottom: 15px;">
+                <label class="control-label" for="target_single_swtich">Refresh Interval:</label>
+                <div class="input-group">
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default btn-sm" id="refresh_set">Set</button>
+                  </span>
+                  <input class="form-control input-sm" type="text" placeholder="seconds" id="refresh_interval">
+                </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>

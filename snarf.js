@@ -46,7 +46,7 @@
 var util       = require('util');
 var net        = require('net');
 var smb        = require("./smb.js");
-var out        = require ("./out.js");
+var out        = require("./out.js");
 var midl       = require("./middler.js");
 var ctrl       = require("./control.js");
 var rout       = require("./router.js");
@@ -57,33 +57,65 @@ var fs         = require('fs');
 var cycle      = require("./cycle.js");
 var bl         = require("./blacklist.js");
 
-out.red("SNARF - 0.3 - SMB Man in the Middle Attack Engine");
+out.red("SNARF - 0.4 - SMB Man in the Middle Attack Engine");
 out.red("by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com)");
 
 getopt = new Getopt([
-    ['d', 'defaultip=IP'  , 'Default IP (think LLMNR or NBNS)'],
-    ['f', 'file=FILE'     , 'Round-robin default destination from file'],
+    ['s', 'single=IP'     , 'Default IP (think LLMNR or NBNS)'],
+    ['c', 'cycle=FILE'    , 'Round-robin default destination from file'],
     ['l',                 , 'Keep limit of 3 connections for each client/server pair: EXPERIMENTAL'],
-    ['b', 'blacklist=FILE', 'Define an IP blacklist to avoid relaying to specified hosts'],
-    ['r', 'responder'     , 'Save responder-style hashes: EXPERIMENTAL'],
-    ['h',                 , 'Show help and usage statement']
+    ['b', 'blacklist=FILE', 'Define a blacklist to avoid relaying to specified hosts; one IP per line'],
+    ['i', 'intercept'     , 'Complete the SNARF chain and begin intercepting immediately'],
+    ['r',                 , 'Save responder-style hashes; EXPERIMENTAL'],
+    ['h', 'help'          , 'Show advanced help and usage statement']
 ]);
 
-getopt.setHelp(
-    "\nUsage: node snarf.js [OPTION] BindIP\n" +
-        "\n" +
-        "[[OPTIONS]]\n"
-);
+var basic = "\nUsage: node snarf.js [OPTION] BindIP\n\n" +
+            "[[OPTIONS]]\n"
+
+var verbose =  "\nUsage: node snarf.js [OPTION] BindIP\n\n" +
+               "  Target:\n" +
+               "    Select one of the following attack modes when executing\n" +
+               "    name-poisoning attacks (LLMNR/NBNS).\n\n" +
+               "    -s, --single=IP        Relay to a single IP address\n" +
+               "    -c, --cycle=FILE       Cycle a list of targets in a round-robin rotation; one IP per line\n\n" +
+               "  Filter:\n" +
+               "    These options can be used to filter incoming connections.\n\n" +
+               "    -l                     Keep limit of 3 connections for each client/server pair [EXPERIMENTAL]\n" +
+               "    -b, --blacklist=FILE   Define a blacklist to avoid relaying to specified hosts; one IP per line\n\n" +
+               "  Router:\n" +
+               "    Snarf uses iptables to detect and process incoming connections.\n" +
+               "    These options can be used to modify the routing behavior.\n\n" +
+               "    -i, --intercept        Complete the SNARF chain and begin intercepting immediately\n" +
+               "                           By default, you must add the last rule manually\n" +
+               "                           ** Only required for ARP poisoning or true MitM attacks\n\n" +
+               "  Miscellaneous:\n" +
+               "    -r                     Save responder-style hashes [EXPERIMENTAL]\n" +
+               "    -v, --version          Show version\n" +
+               "    -h, --help             Show advanced help and usage statement\n"
+
 
 opt = getopt.parse(process.argv.slice(2));
 
-if(opt.argv.length != 1 || opt.options['help']) {
-    getopt.showHelp();
-    process.exit(1);
+if (opt.argv.length != 1) {
+    if (opt.options['help']) {
+        getopt.setHelp(verbose);
+    } else {
+        getopt.setHelp(basic);
+    }
+  getopt.showHelp();
+  process.exit(1);
 }
 
+
 var bindip  = opt.argv[0];
-var router  = new rout.Router(bindip);
+
+if (opt.options['intercept']) {
+    var router = new rout.Router(bindip, true);
+} else {
+    var router = new rout.Router(bindip);
+}
+
 var globals = new Object;
 var broker  = new SMBBroker(globals);
 var count   = 0;
@@ -113,7 +145,7 @@ globals.hashes = [];
 //        by itself :)
 //
 
-if(opt.options['responder']) {
+if(opt.options['r']) {
     globals.responderhash = function(srcip, htype, hash) {
         filename = "SMB-"+htype+"-Client-"+srcip+".txt";
         wstream = fs.createWriteStream(filename, { flags: 'a', encoding: null, mode: 0644 });
@@ -124,20 +156,20 @@ if(opt.options['responder']) {
 
 //
 // One of the more useful features is the ability to send a request
-// that is sent directly to the listening service to a "default" IP of
+// that is sent directly to the listening service to a "single" IP of
 // the attacker's choice.  Well, as useful as this is, it's even
 // better to be able to specify a variety of targets.  This code sets
 // up the global settings for either a single default, a circular list
 // of targets, or no default at all.
 //
 
-if(opt.options['defaultip']) {
+if(opt.options['single']) {
     globals.cycle        = new cycle.Cycle();
     globals.targetsingle = true;
-    globals.targetinit   = function() { return opt.options["defaultip"] }
+    globals.targetinit   = function() { return opt.options["single"] }
     globals.target       = function() { return globals.targetinit() }
-} else if(opt.options['file']) {
-    globals.cycle         = cycle.loadCycle(opt.options['file']);
+} else if(opt.options['cycle']) {
+    globals.cycle         = cycle.loadCycle(opt.options['cycle']);
     globals.targetsingle  = false;
     globals.target        = function() { return globals.cycle.shift() }
     globals.targetpeek    = function() { return globals.cycle.current() }

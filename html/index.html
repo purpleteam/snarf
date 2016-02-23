@@ -2,280 +2,54 @@
 
 <script>
 $(function() {
+  $(".nav a:contains('Home')").parent().addClass('active');
 
-    $(".action").map(function(x) {
-        $(this).button().click(function(event) {
-            $.ajax({ url: $(this).attr("url"),
-                context: document.body
-            }).done(function() { window.location.reload(true); });
-        });
-    });
+  if (! localStorage.getItem("refresh")) {
+      localStorage.setItem("refresh", 5000);
+  }
 
-    $("#data").tabs({ collapsible: true,
-        active: <%= settings.tab_active %>,
-        activate: function(event, ui) {
-            if(ui.newPanel.length == 0 || ui.oldPanel.length == 0) {
-                $.ajax({ url: '/set/tab', type: 'GET' });
-                if(ui.newPanel.length != 0) active: 0;
-            }
-        }
-    });
+  // Initial poll
+  $(document).ready(function() {
+    $.ajax({ url: '/poll',
+             type: 'GET',
+             success: function(data) { $("#wtf").html(data); },
+           });
+  });
 
-    $(".hash").button().click(function() {
-        $.hash($(this).data('hash'), $(this).data('title'));
-    });
+  function poll() {
+    setTimeout(function() {
+      $.ajax({ url: '/poll',
+               type: 'GET',
+               success: function(data) { $("#wtf").html(data); },
+               complete: poll
+             });
+    }, localStorage.getItem("refresh"));
+  }
 
-
-    $("#div_targetmode").buttonset();
-
-    $("input:radio[name=targetmode]").click(function() {
-        var id = $(this).attr("id");
-        if(id == "targetSingle") {
-            $.ajax({url: '/target/mode/single/' + $("#target_single").val(), type: 'GET',
-                    error: function() {
-                        $.alert('Single target is empty. When switching ' +
-                                'to single target mode, a single target ' +
-                                'IP address must be assigned.', 'Error');
-                    }
-            }).done(function() {
-                window.location.reload(true);
-            });
-        } else if(id == "targetCycle") {
-            $.ajax({url: '/target/mode/cycle', type: 'GET'}).done(function() {
-                if(<%= targetlist.length %> <= 0) {
-                    $.alert('Cycle list is empty. When switching to ' +
-                            'cycle target mode, at least one target ' +
-                            'IP address must be defined.', 'Error');
-                } else {
-                    window.location.reload(true);
-                }
-            });
-        }
-    });
-
-    $("#target").button().click(function() {
-        $.ajax({ url: '/set/target/' + $('#target_single').val(), type: 'PATCH' });
-    });
-
-    $("#div_targetlist").accordion({ heightStyle: "fill",  });
-
-    $("#target_add").button({
-        icons: { primary: "ui-icon-circle-plus" },
-        text: false
-    }).click(function() {
-        $.ajax({url: '/target/add/' + $("#target_edit").val(), type: 'GET'}).done(function() {
-            $("#target_edit").val('');
-            window.location.reload(true);
-        });
-    });
-
-    $("#target_remove").button({
-        icons: { primary: "ui-icon-circle-minus" },
-        text: false
-    }).click(function() {
-        $.ajax({url: '/target/remove/' + $("#target_edit").val(), type: 'GET'}).done(function() {
-            $("#target_edit").val('');
-            window.location.reload(true);
-        });
-    });
-
-    $("#div_refresh").buttonset();
-
-    $("input:radio[name=refresh]").click(function() {
-        var id = $(this).attr("id");
-        if(id == "refreshOn") {
-            $.ajax({url: '/refresh/' + $("#refreshval").val(), type: 'GET'});
-            setInterval(function() {
-                window.location.reload(true);
-            }, $("#refreshval").val());
-        } else if(id == "refreshOff") {
-            $.ajax({url: '/refresh/0', type: 'GET'});
-        }
-    });
-
-    $("#div_blacklist").accordion({ heightStyle: "fill" });
-
-    $("#blacklist_add").button({
-        icons: { primary: "ui-icon-circle-plus" },
-        text: false
-    }).click(function() {
-        $.ajax({url: '/block/add/' + $("#blacklist_edit").val(), type: 'GET'}).done(function() {
-            $("#blacklist_edit").val('');
-            window.location.reload(true);
-        });
-    });
-
-    $("#blacklist_remove").button({
-        icons: { primary: "ui-icon-circle-minus" },
-        text: false
-    }).click(function() {
-        $.ajax({url: '/block/remove/' + $("#blacklist_edit").val(), type: 'GET'}).done(function() {
-            $("#blacklist_edit").val('');
-            window.location.reload(true);
-        });
-    });
-
-    if(<%= targetsingle %>) {
-        $("#targetSingle").attr("checked", true);
-    } else {
-        $("#targetCycle").attr("checked", true);
-        $("#target").button("option", "disabled", true);
-        $(".targetcontrol").button("option", "disabled", true);
-    }
-    $("#div_targetmode").buttonset("refresh");
-
-    if(<%= settings.refresh_active %>) {
-        $("#refreshOn").attr("checked", true);
-        setInterval(function() {
-            window.location.reload(true)
-        }, <%= settings.refresh_count %>);
-    } else {
-        $("#refreshOff").attr("checked", true);
-    }
-    $("#div_refresh").buttonset("refresh");
-
+  poll();
 });
 
-$.extend({
-    alert: function(message, title) {
-        $("<div></div>").dialog({
-            buttons: { "Ok": function () { $(this).dialog("close"); } },
-            close: function(event, ui) {
-                // This will remove the <div> from the DOM
-                // Otherwise, the DOM will expand with each new dialog
-                $(this).remove();
-                window.location.reload(true); },
-            resizable: false,
-            title: title,
-            modal: true
-        }).text(message);
-    },
-    hash: function(body, title) {
-        $("<div></div>").dialog({
-            close: function(event, ui) { $(this).remove(); },
-            width: 500,
-            resizable: false,
-            title: title,
-            modal: true
-        }).text(body).css('word-wrap','break-word');
-    }
-});
 </script>
 
-<div id="hash_dialog"><p id="hash_text"></p></div>
-
-<div id="data">
-    <ul>
-        <li><a href="#tab-control">Control</a></li>
-        <li><a href="#tab-about">About</a></li>
-    </ul>
-    <div id="tab-control">
-        <div id="div_target">
-            <div id="div_targetmode">
-                <b>Target Mode:</b>&nbsp;
-                <input type="radio" id="targetSingle" name="targetmode"><label for="targetSingle">single</label>
-                <input type="radio" id="targetCycle" name="targetmode"><label for="targetCycle">cycle</label>
-            </div>
-            <hr id='separator_1' class='separate'>
-            <div id="div_singletarget">
-            <% if(targetsingle) { %>
-                <b>Single Target:</b> <input id='target_single' name='ip' value='<%= target %>' />
-            <% } else { %>
-                <b>Single Target:</b> <input id='target_single' name='ip'>
-            <% } %>
-            <button type='submit' id='target'>change</button>
-            </div>
-            <hr id='separator_2' class='separate'>
-            <div id="div_refresh">
-                <b>Refresh (ms):</b> <input id='refreshval' name='refresh' value='<%= settings.refresh_count %>' />
-                <input type="radio" id="refreshOn" name="refresh"><label for="refreshOn">on</label>
-                <input type="radio" id="refreshOff" name="refresh"><label for="refreshOff">off</label>
-            </div>
-        </div>
-        <div id="div_targetlist">
-            <h3 class='bigheader'>Targets (Cycle)</h3>
-            <div>
-                <% targetlist.forEach(function(tip) { %>
-                <%= tip %><br>
-                <% }) %>
-            </div>
-        </div>
-        <div id="div_target_control">
-            <% if(!targetsingle) { %>
-                <input id='target_edit' value='Next: <%= target %>' disabled>
-            <% } else { %>
-                <input id='target_edit'>
-            <% } %>
-            <button id='target_add' class='targetcontrol'>add blacklist</button>
-            <button id='target_remove' class='targetcontrol'>remove blacklist</button>
-        </div>
-        <div id="div_blacklist">
-            <h3 class='bigheader'>Blacklist</h3>
-            <div>
-                <% blacklist.forEach(function(blip) { %>
-                <%= blip %><br>
-                <% }) %>
-            </div>
-         </div>
-         <div id="div_blacklist_control">
-            <input id='blacklist_edit'>
-            <button id='blacklist_add'>add blacklist</button>
-            <button id='blacklist_remove'>remove blacklist</button>
-        </div>
+<!-- Modal -->
+<div class="modal" id="modal-hash" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" id="modal-head-text">Hash</h4>
+      </div>
+      <div class="modal-body">
+        <p id="modal-body-text"></p>
+      </div>
     </div>
-    <div id="tab-about">
-        <p>The following shows a listing of all middlers currently active.
-	       Note that if you delete the current one, you will need to choose
-	       which becomes the next active widget.</p>
-        <p>Courtesy SNARF v0.3, by Josh Stone (yakovdk@gmail.com) and Victor Mata (victor@offense-in-depth.com).</p>
-    </div>
+  </div>
 </div>
 
-
-<table class="ui-widget" style="width: 100%">
-    <tr>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">ID</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Current?</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Connection</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Username</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Host</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Fresh</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Hash</th>
-	    <th class="ui-state-default ui-th-column ui-th-ltr">Actions</th>
-	</tr>
-
-	<% middlers.forEach(function(middler) { %>
-	    <% if(middler.active) { %>
-            <% if(middler.expired) { %>
-                <tr class="ui-widget-content">
-            <% } else { %>
-                <tr style="background-color: #dddddd; border-color: #dddddd">
-            <% } %>
-	            <td><%= middler.id %></td>
-	            <td style='font-size: 20pt; text-align:center'>
-                    <% if(middler.current) { %>
-                        &rarr;
-                    <% } else { %>
-                        &nbsp;
-                    <% } %>
-                </td>
-	            <td><%= middler.addr %> &rarr; <%= middler.dest %></td>
-	            <td><%= middler.domain %>\<%= middler.user %></td>
-	            <td><%= middler.host %><br/><%= middler.winver %></td>
-	            <td><%= middler.age %> s</td>
-	            <td align='center'>
-                    <button class='hash' data-hash="<%= middler.hash %>" data-title="Snarf ID: <%= middler.id %>"><%= middler.htype %></button>
-                </td>
-	            <td>
-                    <button class='action' url="/kill/<%= middler.id %>" <%= middler.expired ? "" : "disabled" %> />kill</button>
-	                <button class='action' url="/choose/<%= middler.id %>" <%= middler.expired ? "" : "disabled" %> />choose</button>
-	                <button class='action' url="/expire/<%= middler.id %>" <%= middler.expired ? "disabled" : "" %> />expire</button>
-	                <button class='action' url="/block/add/<%= middler.addr %>">block</button>
-                </td>
-	        </tr>
-        <% } %>
-    <% }) %>
-
-</table>
+<div class="bs-example" id="wtf">
+    <div style="text-align: center">
+      <i class="fa fa-refresh fa-spin" style="font-size: 24px;"></i>
+    </div>
+</div>
 
 <% include footer.html %>

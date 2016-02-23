@@ -36,18 +36,30 @@ module.exports.ControlPanel = function(broker, port, globals) {
     app.set("refresh_active", false);
     app.set("refresh_count", 5000);
 
-    app.get('/', function(req, res){
+    app.get('/', function(req, res) {
         var middlers  = broker.listMiddlers();
         var current   = broker.getCurrentID();
-        var target    = globals.target;
-        var blacklist = globals.blacklist.list();
         res.render('index', { middlers:     broker.listMiddlers(),
                               current:      broker.getCurrentID(),
-                              target:       globals.targetpeek ? globals.targetpeek() : globals.target(),
-                              targetsingle: globals.targetsingle,
-                              blacklist:    globals.blacklist.list(),
-                              targetlist:   globals.cycle.list()
                             });
+    });
+
+    app.get('/poll', function(req, res) {
+      var middlers  = broker.listMiddlers();
+      var current   = broker.getCurrentID();
+      var target    = globals.target;
+      res.render('table', { middlers:     broker.listMiddlers(),
+                            current:      broker.getCurrentID(),
+                            target:       globals.targetpeek ? globals.targetpeek() : globals.target(),
+                          });
+    });
+
+    app.get('/settings', function(req, res) {
+        res.render('settings', { target:       globals.targetpeek ? globals.targetpeek() : globals.target(),
+                                 targetsingle: globals.targetsingle,
+                                 blacklist:    globals.blacklist.list(),
+                                 targetlist:   globals.cycle.list()
+                               });
     });
 
     app.get('/kill/:num', function(req, res) {
@@ -76,37 +88,6 @@ module.exports.ControlPanel = function(broker, port, globals) {
             broker.expire(n);
         }
         res.redirect('/');
-    });
-
-    app.get('/block/add/:addr', function(req, res) {
-        var addr = req.params.addr;
-        out.yellow("[DEBUG] Control Server: Received request to block: " + addr);
-        for(var i = 0; i < broker.getMiddlers().length; i++) {
-            if(broker.getMiddlers()[i].getClientAddr() == addr) {
-                broker.getMiddlers()[i].terminate();
-            }
-        }
-        broker.resetIDs();
-        if(globals.blacklist.ok(addr)) {
-            globals.blacklist.push(addr);
-        }
-        res.redirect('/');
-    });
-
-    app.get('/block/remove/:addr', function(req, res) {
-        var addr = req.params.addr;
-        out.yellow("[DEBUG] Control Server: Received request to unblock: " + addr);
-        globals.blacklist.pop(addr);
-        res.redirect('/');
-    });
-
-    app.patch('/set/target/:addr', function(req, res) {
-        var addr = req.params.addr;
-        if(!globals.targetpeek) {
-            out.blue("Setting new default IP to " + addr);
-            globals.target = function() { return addr };
-        }
-        res.redirect(301, "/");
     });
 
     app.get('/target/mode/cycle', function(req, res) {
@@ -140,6 +121,15 @@ module.exports.ControlPanel = function(broker, port, globals) {
         res.redirect('/');
     });
 
+    app.get('/set/target/:addr', function(req, res) {
+        var addr = req.params.addr;
+        if(!globals.targetpeek) {
+            out.blue("Setting new default IP to " + addr);
+            globals.target = function() { return addr };
+        }
+        res.redirect(301, "/");
+    });
+
     app.get('/target/add/:addr', function(req, res) {
         var addr = req.params.addr;
         out.yellow("[DEBUG] Control Server: Received request to add target to cycle list: " + addr);
@@ -154,29 +144,25 @@ module.exports.ControlPanel = function(broker, port, globals) {
         res.redirect('/');
     });
 
-    app.get('/set/tab', function(req, res) {
-        if(!app.get("tab_active")) {
-            app.set("tab_active", "0");
-        } else {
-            app.set("tab_active", false);
+    app.get('/block/add/:addr', function(req, res) {
+        var addr = req.params.addr;
+        out.yellow("[DEBUG] Control Server: Received request to block: " + addr);
+        for(var i = 0; i < broker.getMiddlers().length; i++) {
+            if(broker.getMiddlers()[i].getClientAddr() == addr) {
+                broker.getMiddlers()[i].terminate();
+            }
         }
-        out.yellow("[DEBUG] Control Server: tab_active is now set to: " + app.get("tab_active"));
+        broker.resetIDs();
+        if(globals.blacklist.ok(addr)) {
+            globals.blacklist.push(addr);
+        }
         res.redirect('/');
     });
 
-    app.get('/refresh/:num', function(req, res) {
-        var n = parseInt(req.params.num);
-        if(n != NaN) {
-            if(n > 0) {
-                app.set("refresh_count", n);
-                app.enable("refresh_active");
-            } else {
-                app.disable("refresh_active");
-            }
-        } else {
-            app.disable("refresh_active");
-        }
-        out.yellow("[DEBUG] Control Server: refresh_active is: " + app.get("refresh_active") + " and time is: " + app.get("refresh_count"));
+    app.get('/block/remove/:addr', function(req, res) {
+        var addr = req.params.addr;
+        out.yellow("[DEBUG] Control Server: Received request to unblock: " + addr);
+        globals.blacklist.pop(addr);
         res.redirect('/');
     });
 

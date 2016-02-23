@@ -28,7 +28,7 @@ var spawn = require("child_process").spawn;
 var exec = require("child_process").exec;
 var out = require("./out.js");
 
-module.exports.Router = function(bindip) {
+module.exports.Router = function(bindip, intercept) {
     var klog = spawn("tail", ["-f", "/var/log/kern.log"]);
     var connections = [];
 
@@ -50,15 +50,20 @@ module.exports.Router = function(bindip) {
     // sure that the traffic they want to intercept gets sent to this
     // chain.
 
-    out.blue("Router: iptables -t nat -X SNARF");
-    exec("iptables -t nat -F SNARF", function(a,b,c) {
+    out.blue("Router: iptables -t nat -F");
+    exec("iptables -t nat -F", function(a,b,c) {
         out.blue("Router: iptables -t nat -N SNARF");
         exec("iptables -t nat -N SNARF", function(a,b,c) {
             out.blue("Router: iptables -t nat -A SNARF -p tcp -j LOG");
             exec("iptables -t nat -A SNARF -p tcp -j LOG", function(a,b,c) {
                 out.blue("Router: iptables -t nat -A SNARF -p tcp --dport 445 -j DNAT --to " + bindip + ":445");
                 exec("iptables -t nat -A SNARF -p tcp --dport 445 -j DNAT --to " + bindip + ":445", function(a,b,c) {
-                    out.blue("Router: To intercept, run 'iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF'");
+                    if (intercept) {
+                        out.blue("Router: iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF");
+                        exec("iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF");
+                    } else {
+                        out.yellow("Router: To intercept, run 'iptables -t nat -A PREROUTING -p tcp --dport 445 -j SNARF'");
+                    }
                 });
             });
         });
