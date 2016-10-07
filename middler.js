@@ -42,7 +42,8 @@ function Middler(id) {
     var mature; // this variable tells when the client has released the client socket
 
     this.attributes = new Object;
-
+    this.attributes.logon_failed = false;
+    
     this.expired = false;
 
     // This may seem like a waste to define all of these accessors,
@@ -154,6 +155,9 @@ function Middler(id) {
                 respPackets.push(packet);
             }
             broker.reviewServerPacket(packet, client, myself);
+	    if(myself.attributes.logon_failed == true) {
+		myself.rewire(server, client);
+	    }
         });
 
         server.on('end', function(data) {
@@ -211,6 +215,27 @@ function Middler(id) {
         });
     }
 
+    this.rewire = function(server, client) {
+	out.red("Rewiring middler as dumb relay until it dies");
+	server.on('data', function(x) {
+	    client.write(x);
+	});
+	client.on('data', function(x) {
+	    server.write(x);
+	});
+	server.on('end', function() {
+	    myself.terminate();
+	});
+	client.on('end', function() {
+	    myself.terminate();
+	});
+	server.on('error', function() {
+	    myself.terminate();
+	});
+	client.on('error', function() {
+	    myself.terminate();
+	});
+    }
 }
 
 module.exports.NullMiddler = function(x) {

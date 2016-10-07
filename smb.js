@@ -172,6 +172,10 @@ function SMBPacket(buffer) {
         // buffer.writeUInt8(0x00, 50);
     }
 
+    if(this.commandCode == 0x73) {
+	this.status = buffer.readUInt32LE(base + 5);
+    }
+
     this.describe = function() {
         return util.format("SMB (%d bytes), CMD: %s", this.length, this.command);
     }

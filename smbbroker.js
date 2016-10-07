@@ -68,6 +68,16 @@ module.exports.SMBBroker = function(globals) {
         if(client) {
             if(packet.commandCode == 0x73) {
 
+		// This checks for a failed logon -- if the brokered connection does
+		// not successfully authenticate, we don't want to keep it around,
+		// cluttering up the list.  This session will never be useful anyway,
+		// so it is worthless.
+		
+		if(packet.status != 0 && packet.status != 3221225494) {
+		    out.red("ERROR: client failed authentication!");
+		    middler.attributes.logon_failed = true;
+		}
+		
                 // we need to record the UID set by the server
                 // for authenticating the hacker tool properly
                 var smb_userid = packet.buffer.readUInt16LE(32);
@@ -273,7 +283,7 @@ module.exports.SMBBroker = function(globals) {
                 middler.getServer().write(packet);
             }, 12 * 60000); // every 12 minutes is a safe frequency
         } else {
-            db.red("ERROR starting keepalive -- no userid was detected?");
+            out.red("ERROR starting keepalive -- no userid was detected?");
             middler.attributes.timerID = null;
         }
     }
